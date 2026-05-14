@@ -482,33 +482,7 @@ func ConvertGeminiStreamToResponses(ctx context.Context, modelName string, origi
 			}
 
 			// 关闭 text block
-			if st.InTextBlock {
-				// response.output_text.done
-				done := `{"type":"response.output_text.done","sequence_number":0,"item_id":"","output_index":0,"content_index":0,"text":"","logprobs":[]}`
-				done, _ = sjson.Set(done, "sequence_number", nextSeq())
-				done, _ = sjson.Set(done, "item_id", st.CurrentMsgID)
-				done, _ = sjson.Set(done, "output_index", st.TextIndex)
-				done, _ = sjson.Set(done, "text", st.TextBuf.String())
-				out = append(out, emitResponsesEvent("response.output_text.done", done))
-
-				// response.content_part.done
-				partDone := `{"type":"response.content_part.done","sequence_number":0,"item_id":"","output_index":0,"content_index":0,"part":{"type":"output_text","annotations":[],"logprobs":[],"text":""}}`
-				partDone, _ = sjson.Set(partDone, "sequence_number", nextSeq())
-				partDone, _ = sjson.Set(partDone, "item_id", st.CurrentMsgID)
-				partDone, _ = sjson.Set(partDone, "output_index", st.TextIndex)
-				partDone, _ = sjson.Set(partDone, "part.text", st.TextBuf.String())
-				out = append(out, emitResponsesEvent("response.content_part.done", partDone))
-
-				// response.output_item.done
-				final := `{"type":"response.output_item.done","sequence_number":0,"output_index":0,"item":{"id":"","type":"message","status":"completed","content":[{"type":"output_text","annotations":[],"logprobs":[],"text":""}],"role":"assistant"}}`
-				final, _ = sjson.Set(final, "sequence_number", nextSeq())
-				final, _ = sjson.Set(final, "output_index", st.TextIndex)
-				final, _ = sjson.Set(final, "item.id", st.CurrentMsgID)
-				final, _ = sjson.Set(final, "item.content.0.text", st.TextBuf.String())
-				out = append(out, emitResponsesEvent("response.output_item.done", final))
-
-				st.InTextBlock = false
-			}
+			out = append(out, st.closeGeminiTextBlock(nextSeq)...)
 
 			// 发送 response.completed
 			out = append(out, st.generateCompletedEvent(originalRequestRawJSON, finishReason.String())...)
@@ -559,6 +533,37 @@ func (st *geminiToResponsesStreamState) closeGeminiReasoningBlock(nextSeq func()
 		emitResponsesEvent("response.reasoning_summary_part.done", partDone),
 		emitResponsesEvent("response.output_item.done", itemDone),
 	}
+}
+
+func (st *geminiToResponsesStreamState) closeGeminiTextBlock(nextSeq func() int) []string {
+	if !st.InTextBlock {
+		return nil
+	}
+	var out []string
+
+	done := `{"type":"response.output_text.done","sequence_number":0,"item_id":"","output_index":0,"content_index":0,"text":"","logprobs":[]}`
+	done, _ = sjson.Set(done, "sequence_number", nextSeq())
+	done, _ = sjson.Set(done, "item_id", st.CurrentMsgID)
+	done, _ = sjson.Set(done, "output_index", st.TextIndex)
+	done, _ = sjson.Set(done, "text", st.TextBuf.String())
+	out = append(out, emitResponsesEvent("response.output_text.done", done))
+
+	partDone := `{"type":"response.content_part.done","sequence_number":0,"item_id":"","output_index":0,"content_index":0,"part":{"type":"output_text","annotations":[],"logprobs":[],"text":""}}`
+	partDone, _ = sjson.Set(partDone, "sequence_number", nextSeq())
+	partDone, _ = sjson.Set(partDone, "item_id", st.CurrentMsgID)
+	partDone, _ = sjson.Set(partDone, "output_index", st.TextIndex)
+	partDone, _ = sjson.Set(partDone, "part.text", st.TextBuf.String())
+	out = append(out, emitResponsesEvent("response.content_part.done", partDone))
+
+	final := `{"type":"response.output_item.done","sequence_number":0,"output_index":0,"item":{"id":"","type":"message","status":"completed","content":[{"type":"output_text","annotations":[],"logprobs":[],"text":""}],"role":"assistant"}}`
+	final, _ = sjson.Set(final, "sequence_number", nextSeq())
+	final, _ = sjson.Set(final, "output_index", st.TextIndex)
+	final, _ = sjson.Set(final, "item.id", st.CurrentMsgID)
+	final, _ = sjson.Set(final, "item.content.0.text", st.TextBuf.String())
+	out = append(out, emitResponsesEvent("response.output_item.done", final))
+
+	st.InTextBlock = false
+	return out
 }
 
 // generateCompletedEvent 生成完成事件

@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### 修复
+
+- **修复 MiniMax 等上游流式输出缺少 `[DONE]` 终止符导致 `stream disconnected before completion`** - 当 OpenAI 兼容上游（如 MiniMax）在流式响应结束时不发送 `data: [DONE]`，Responses handler 现在会自动检测并补发 `response.completed` 事件，确保客户端正常接收完整流（Closes #39）
+
 ### 新增
 
 - **新增 `thinking` 思考参数风格** - 渠道 `reasoningParamStyle` 新增 `thinking` 选项，配置后将 reasoning effort 转换为 `{"thinking": {"type": "enabled"}}` 格式，支持京东 CodingPlan / GLM-5 等需要该格式开启思考模式的上游（Closes #54）

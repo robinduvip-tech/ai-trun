@@ -772,6 +772,8 @@ func handleStreamSuccess(
 	needTokenPatch := false
 	clientGone := false
 	promptTokensTotal := 0
+	completedEventSent := false
+	eventsSentCount := 0
 
 	// processLine 处理单行数据（复用于缓冲行回放和后续读取）
 	processLine := func(line string) {
@@ -854,6 +856,7 @@ func handleStreamSuccess(
 			// 在 response.completed 事件前注入/修补 usage
 			eventToSend := event
 			if isResponsesCompletedEvent(event) {
+				completedEventSent = true
 				if !hasUsage {
 					// 上游完全没有 usage，注入本地估算
 					var injectedInput, injectedOutput int
@@ -888,8 +891,11 @@ func handleStreamSuccess(
 					} else if envCfg.ShouldLog("info") {
 						log.Printf("[Responses-Stream] 客户端中断连接 (正常行为)，继续接收上游数据...")
 					}
-				} else if flusher != nil {
-					flusher.Flush()
+				} else {
+					eventsSentCount++
+					if flusher != nil {
+						flusher.Flush()
+					}
 				}
 			}
 		}
@@ -906,6 +912,57 @@ func handleStreamSuccess(
 			break
 		}
 		processLine(sl.text)
+	}
+
+	// 兜底：如果上游未发送终止符（如 MiniMax 不发 [DONE]），补发 response.completed
+	if !completedEventSent && !clientGone {
+		log.Printf("[Responses-Stream] 上游未发送终止符，补发 response.completed (upstreamType=%s)", upstreamType)
+
+		var fallbackEvents []string
+		if needConvert {
+			switch upstreamType {
+			case "claude", "gemini":
+				fallbackEvents = converters.SynthesizeResponsesCompleted(originalRequestJSON, &converterState, upstreamType, eventsSentCount)
+			default:
+				// OpenAI 格式（包括 MiniMax）：发送合成 [DONE] 触发 converter 正常完成流程
+				fallbackEvents = converters.ConvertOpenAIChatToResponses(
+					c.Request.Context(),
+					originalReq.Model,
+					originalRequestJSON,
+					nil,
+					[]byte("data: [DONE]"),
+					&converterState,
+				)
+			}
+		} else {
+			fallbackEvents = converters.SynthesizeResponsesCompleted(originalRequestJSON, &converterState, "responses", eventsSentCount)
+		}
+
+		for _, event := range fallbackEvents {
+			eventToSend := event
+			if isResponsesCompletedEvent(event) {
+				completedEventSent = true
+				if !hasUsage {
+					var injectedInput, injectedOutput int
+					eventToSend, injectedInput, injectedOutput = injectResponsesUsageToCompletedEvent(event, originalRequestJSON, outputTextBuffer.String(), envCfg)
+					collectedUsage.InputTokens = injectedInput
+					collectedUsage.OutputTokens = injectedOutput
+					collectedUsage.TotalTokens = calculateTotalTokensWithCache(
+						injectedInput,
+						injectedOutput,
+						collectedUsage.CacheReadInputTokens,
+						collectedUsage.CacheCreationInputTokens,
+						collectedUsage.CacheCreation5mInputTokens,
+						collectedUsage.CacheCreation1hInputTokens,
+					)
+				} else if needTokenPatch {
+					eventToSend = patchResponsesCompletedEventUsage(event, originalRequestJSON, outputTextBuffer.String(), &collectedUsage, envCfg)
+				}
+			}
+			if _, err := c.Writer.Write([]byte(eventToSend)); err == nil && flusher != nil {
+				flusher.Flush()
+			}
+		}
 	}
 
 	if err := scanner.Err(); err != nil {

@@ -872,6 +872,54 @@ func (st *chatToResponsesState) generateCompletedEvents(originalRequestRawJSON [
 	return out
 }
 
+// SynthesizeResponsesCompleted 在流异常结束（上游未发送终止符）时合成 response.completed 事件。
+// 根据 upstreamType 从 converterState 中提取已累积的状态来构建完整的完成事件。
+// lastSeq 用于在无法从 converter state 获取序列号时，确保生成的事件序列号单调递增。
+func SynthesizeResponsesCompleted(originalRequestRawJSON []byte, converterState *any, upstreamType string, lastSeq int) []string {
+	if converterState != nil && *converterState != nil {
+		switch upstreamType {
+		case "claude":
+			if st, ok := (*converterState).(*claudeToResponsesState); ok {
+				nextSeq := func() int { st.Seq++; return st.Seq }
+				var out []string
+				if st.ActiveItemType == "reasoning" {
+					out = append(out, st.closeReasoning(nextSeq)...)
+				}
+				if st.ActiveItemType == "text" {
+					out = append(out, st.closeText(nextSeq)...)
+				}
+				if st.ActiveItemType == "tool_use" {
+					out = append(out, st.closeToolUse(nextSeq)...)
+				}
+				out = append(out, st.completedEvent("", originalRequestRawJSON, nextSeq))
+				return out
+			}
+		case "gemini":
+			if st, ok := (*converterState).(*geminiToResponsesStreamState); ok {
+				nextSeq := func() int { st.Seq++; return st.Seq }
+				var out []string
+				if st.InReasoningBlock {
+					out = append(out, st.closeGeminiReasoningBlock(nextSeq)...)
+				}
+				if st.InTextBlock {
+					out = append(out, st.closeGeminiTextBlock(nextSeq)...)
+				}
+				out = append(out, st.generateCompletedEvent(originalRequestRawJSON, "STOP")...)
+				return out
+			}
+		default:
+			if st, ok := (*converterState).(*chatToResponsesState); ok {
+				return st.generateCompletedEvents(originalRequestRawJSON)
+			}
+		}
+	}
+
+	// 最终兜底：合成最小 response.completed，使用 lastSeq+1 确保序列号单调递增
+	seq := lastSeq + 1
+	completed := fmt.Sprintf(`{"type":"response.completed","sequence_number":%d,"response":{"id":"","object":"response","created_at":0,"status":"completed","background":false,"error":null}}`, seq)
+	return []string{emitResponsesEvent("response.completed", completed)}
+}
+
 // ConvertOpenAIChatToResponsesNonStream 将 OpenAI Chat Completions 响应转换为 Responses 格式（非流式）
 func ConvertOpenAIChatToResponsesNonStream(_ context.Context, _ string, originalRequestRawJSON, requestRawJSON, rawJSON []byte, _ *any) string {
 	root := gjson.ParseBytes(rawJSON)
