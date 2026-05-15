@@ -413,8 +413,8 @@
               </v-card>
             </v-col>
 
-            <!-- Vision 回退模型 -->
-            <v-col v-if="form.noVisionModels.length > 0 || form.noVision" cols="12">
+            <!-- Vision 回退模型（仅当有模型级 noVision 标记时显示） -->
+            <v-col v-if="form.noVisionModels.length > 0" cols="12">
               <v-combobox
                 v-model="form.visionFallbackModel"
                 :label="t('addChannel.visionFallbackLabel')"
@@ -426,6 +426,7 @@
                 clearable
                 variant="outlined"
                 density="comfortable"
+                @focus="ensureTargetModelsLoaded"
               />
             </v-col>
 
@@ -2388,6 +2389,12 @@ const handleTargetModelClick = () => {
 
   // 调用获取模型列表(内部有缓存逻辑)
   fetchTargetModels()
+}
+
+const ensureTargetModelsLoaded = () => {
+  if (targetModelOptions.value.length === 0) {
+    fetchTargetModels()
+  }
 }
 
 const fetchTargetModels = async () => {
