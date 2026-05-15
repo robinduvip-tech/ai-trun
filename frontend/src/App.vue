@@ -211,7 +211,7 @@
     <v-main>
       <v-container fluid class="pa-4 pa-md-6">
         <!-- 全局统计顶部可折叠卡片（根据当前 Tab 显示对应统计） -->
-        <v-card v-if="isAuthenticated" class="mb-4 global-stats-panel">
+        <v-card v-if="isAuthenticated && route.path !== '/conversations'" class="mb-4 global-stats-panel">
           <div
             class="global-stats-header d-flex align-center justify-space-between px-4 py-2"
             style="cursor: pointer;"
@@ -234,7 +234,7 @@
         </v-card>
 
         <!-- 统计卡片 - 玻璃拟态风格 -->
-        <v-row class="mb-6 stat-cards-row">
+        <v-row v-if="route.path !== '/conversations'" class="mb-6 stat-cards-row">
           <v-col cols="6" sm="4">
             <div class="stat-card stat-card-info">
               <div class="stat-card-icon">
@@ -280,8 +280,25 @@
           </v-col>
         </v-row>
 
+        <!-- 驾驶舱页面：仅显示系统状态 -->
+        <v-row v-if="route.path === '/conversations'" class="mb-4 stat-cards-row">
+          <v-col cols="12" sm="4">
+            <div class="stat-card" :class="systemStore.systemStatus === 'running' ? 'stat-card-emerald' : 'stat-card-error'">
+              <div class="stat-card-icon" :class="{ 'pulse-animation': systemStore.systemStatus === 'running' }">
+                <v-icon size="28">{{ systemStore.systemStatus === 'running' ? 'mdi-heart-pulse' : 'mdi-alert-circle' }}</v-icon>
+              </div>
+              <div class="stat-card-content">
+                <div class="stat-card-value">{{ systemStatusText }}</div>
+                <div class="stat-card-label">{{ t('app.stats.systemStatus') }}</div>
+                <div class="stat-card-desc">{{ systemStatusDesc }}</div>
+              </div>
+              <div class="stat-card-glow"></div>
+            </div>
+          </v-col>
+        </v-row>
+
         <!-- 操作按钮区域 - 现代化设计 -->
-        <div class="action-bar mb-6">
+        <div v-if="route.path !== '/conversations'" class="action-bar mb-6">
           <div class="action-bar-left">
             <v-btn
               color="primary"
