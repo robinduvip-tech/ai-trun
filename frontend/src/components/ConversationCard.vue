@@ -3,7 +3,12 @@
     :class="['conversation-card', { 'override-active': hasOverride }]"
     :style="{ '--ccx-kind-color': kindCssColor }"
     elevation="0"
+    role="button"
+    tabindex="0"
+    :aria-expanded="expanded"
     @click="$emit('toggleExpand')"
+    @keydown.enter.prevent="$emit('toggleExpand')"
+    @keydown.space.prevent="$emit('toggleExpand')"
   >
     <v-card-text class="pa-4">
       <!-- Row 1: LED + Kind + Title/User + Stats -->
@@ -86,9 +91,9 @@
       </div>
 
       <!-- Row 3: Raw User ID -->
-      <div v-if="conversation.rawUserId" class="raw-user-id mt-2 d-flex align-center" @click.stop="copyRawUserId">
-        <span class="text-caption text-medium-emphasis font-weight-mono raw-user-id-text">{{ conversation.rawUserId }}</span>
-        <v-btn icon size="x-small" variant="text" class="ml-1 copy-btn" @click.stop="copyRawUserId">
+      <div v-if="conversation.rawUserId" class="raw-user-id mt-2 d-flex align-center">
+        <span class="text-caption text-medium-emphasis font-weight-mono raw-user-id-text" @click.stop="copyRawUserId">{{ conversation.rawUserId }}</span>
+        <v-btn icon size="x-small" variant="text" class="copy-btn" aria-label="Copy user ID" @click.stop="copyRawUserId">
           <v-icon size="12">mdi-content-copy</v-icon>
         </v-btn>
       </div>
@@ -114,12 +119,15 @@ const props = defineProps<{
   override?: SequenceOverrideInfo
   availableChannels: ChannelInfo[]
   expanded: boolean
+  nowMs: number
 }>()
 
 const emit = defineEmits<{
   toggleExpand: []
   setOverride: [convId: string, sequence: ChannelSequenceEntry[]]
   removeOverride: [convId: string]
+  success: [message: string]
+  error: [message: string]
 }>()
 
 const MAX_VISIBLE = 5
@@ -158,8 +166,7 @@ const tooltipText = computed(() => {
 
 const duration = computed(() => {
   const start = new Date(props.conversation.createdAt).getTime()
-  const now = Date.now()
-  const mins = Math.floor((now - start) / 60000)
+  const mins = Math.floor((props.nowMs - start) / 60000)
   if (mins < 1) return '<1m'
   if (mins < 60) return `${mins}m`
   return `${Math.floor(mins / 60)}h${mins % 60}m`
@@ -168,8 +175,7 @@ const duration = computed(() => {
 const remainingTime = computed(() => {
   if (!props.override) return ''
   const expires = new Date(props.override.expiresAt).getTime()
-  const now = Date.now()
-  const remaining = Math.max(0, expires - now)
+  const remaining = Math.max(0, expires - props.nowMs)
   const mins = Math.floor(remaining / 60000)
   const secs = Math.floor((remaining % 60000) / 1000)
   return `${mins}:${secs.toString().padStart(2, '0')}`
@@ -286,9 +292,14 @@ function handleDemote(index: number) {
   emit('setOverride', props.conversation.id, buildSequence(current))
 }
 
-function copyRawUserId() {
+async function copyRawUserId() {
   if (!props.conversation.rawUserId) return
-  navigator.clipboard.writeText(props.conversation.rawUserId)
+  try {
+    await navigator.clipboard.writeText(props.conversation.rawUserId)
+    emit('success', t('cockpit.rawUserIdCopied'))
+  } catch {
+    emit('error', t('cockpit.rawUserIdCopyFailed'))
+  }
 }
 
 </script>
@@ -517,7 +528,6 @@ function copyRawUserId() {
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
-  flex: 1;
 }
 .raw-user-id .copy-btn {
   flex-shrink: 0;

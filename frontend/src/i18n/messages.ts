@@ -21,6 +21,10 @@ export type MessageKey =
   | 'cockpit.overrideActive'
   | 'cockpit.restoreDefault'
   | 'cockpit.empty'
+  | 'cockpit.noMatches'
+  | 'cockpit.searchPlaceholder'
+  | 'cockpit.rawUserIdCopied'
+  | 'cockpit.rawUserIdCopyFailed'
   | 'app.header.logout'
   | 'app.stats.trafficTitle'
   | 'app.stats.totalChannels'
@@ -442,6 +446,10 @@ export const messages: Record<SupportedLocale, Record<MessageKey, string>> = {
     'cockpit.overrideActive': 'Custom channel order is active. Auto-reset in {time}',
     'cockpit.restoreDefault': 'Restore default order',
     'cockpit.empty': 'No active flights. Conversations will appear on radar when requests pass through the gateway.',
+    'cockpit.noMatches': 'No conversations match the current filter.',
+    'cockpit.searchPlaceholder': 'Search...',
+    'cockpit.rawUserIdCopied': 'User ID copied',
+    'cockpit.rawUserIdCopyFailed': 'Copy failed',
     'app.header.logout': 'Logout',
     'app.stats.trafficTitle': '{tab} traffic',
     'app.stats.totalChannels': 'Total channels',
@@ -862,6 +870,10 @@ export const messages: Record<SupportedLocale, Record<MessageKey, string>> = {
     'cockpit.overrideActive': 'Urutan channel kustom aktif. Otomatis kembali dalam {time}',
     'cockpit.restoreDefault': 'Pulihkan urutan default',
     'cockpit.empty': 'Belum ada sesi aktif. Percakapan akan muncul di radar saat request melewati gateway.',
+    'cockpit.noMatches': 'Tidak ada percakapan yang cocok dengan filter.',
+    'cockpit.searchPlaceholder': 'Cari...',
+    'cockpit.rawUserIdCopied': 'ID pengguna disalin',
+    'cockpit.rawUserIdCopyFailed': 'Gagal menyalin',
     'app.header.logout': 'Keluar',
     'app.stats.trafficTitle': 'Traffic {tab}',
     'app.stats.totalChannels': 'Total channel',
@@ -1282,6 +1294,10 @@ export const messages: Record<SupportedLocale, Record<MessageKey, string>> = {
     'cockpit.overrideActive': '正在使用自定义渠道顺序，{time} 后自动恢复默认调度',
     'cockpit.restoreDefault': '恢复默认顺序',
     'cockpit.empty': '暂无活跃会话。请求经过网关后，会话会出现在驾驶舱雷达上。',
+    'cockpit.noMatches': '没有匹配当前过滤条件的会话',
+    'cockpit.searchPlaceholder': '搜索...',
+    'cockpit.rawUserIdCopied': '用户 ID 已复制',
+    'cockpit.rawUserIdCopyFailed': '复制失败',
     'app.header.logout': '注销',
     'app.stats.trafficTitle': '{tab} 流量统计',
     'app.stats.totalChannels': '总渠道数',

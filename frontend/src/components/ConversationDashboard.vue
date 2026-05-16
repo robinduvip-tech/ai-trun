@@ -22,12 +22,22 @@
         <v-chip value="gemini" variant="outlined" size="small" color="orange" class="filter-chip" filter>GEMINI</v-chip>
       </v-chip-group>
       <v-spacer />
+      <v-text-field
+        v-model="searchQuery"
+        density="compact"
+        variant="outlined"
+        hide-details
+        clearable
+        prepend-inner-icon="mdi-magnify"
+        :placeholder="t('cockpit.searchPlaceholder')"
+        class="conversation-search-field"
+      />
       <span class="system-status-indicator" :class="'status-' + systemStore.systemStatus">
         <span class="status-dot"></span>
         {{ systemStatusText }}
       </span>
       <span class="text-caption text-medium-emphasis">
-        Active: {{ filteredConversations.length }}
+        Active: {{ visibleConversations.length }}
         <span v-if="overrideCount > 0" class="ml-2 text-warning">Override: {{ overrideCount }}</span>
       </span>
     </div>
@@ -47,30 +57,31 @@
 
     <!-- Conversation cards -->
     <template v-else>
-      <v-card v-if="!filteredConversations.length" variant="outlined" class="text-center pa-8 mb-4">
+      <v-card v-if="!visibleConversations.length" variant="outlined" class="text-center pa-8 mb-4">
         <div class="text-body-2 text-medium-emphasis">
-          {{ t('cockpit.empty') }}
+          {{ t('cockpit.noMatches') }}
         </div>
       </v-card>
-      <v-row>
-        <v-col
-          v-for="conv in sortedConversations"
-          v-show="isVisible(conv)"
+      <div class="conversation-masonry">
+        <div
+          v-for="conv in visibleConversations"
           :key="conv.id"
-          cols="12"
-          md="6"
+          class="conversation-masonry-item"
         >
           <ConversationCard
             :conversation="conv"
             :override="overrides[conv.id]"
             :available-channels="getChannelsForKind(conv.kind)"
             :expanded="expandedCards.has(conv.id)"
+            :now-ms="nowMs"
             @toggle-expand="toggleExpand(conv.id)"
             @set-override="handleSetOverride"
             @remove-override="handleRemoveOverride"
+            @success="(msg: string) => emit('success', msg)"
+            @error="(msg: string) => emit('error', msg)"
           />
-        </v-col>
-      </v-row>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -88,6 +99,11 @@ const { t } = useI18n()
 const { xs } = useDisplay()
 const systemStore = useSystemStore() as any
 
+const emit = defineEmits<{
+  success: [message: string]
+  error: [message: string]
+}>()
+
 const systemStatusText = computed(() => {
   switch (systemStore.systemStatus) {
     case 'running': return t('system.running')
@@ -101,6 +117,8 @@ const loading = ref(true)
 const conversations = ref<ConversationInfo[]>([])
 const overrides = ref<Record<string, SequenceOverrideInfo>>({})
 const kindFilter = ref('')
+const searchQuery = ref('')
+const nowMs = ref(Date.now())
 
 const kindFilterOptions = [
   { title: 'ALL', value: '' },
@@ -140,16 +158,22 @@ const sortedConversations = computed(() => {
   return [...conversations.value].sort((a, b) => new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime())
 })
 
-const filteredConversations = computed(() => {
-  const filter = kindFilter.value
-  if (!filter) return sortedConversations.value
-  return sortedConversations.value.filter(c => c.kind === filter)
+const visibleConversations = computed(() => {
+  let list = sortedConversations.value
+  const kind = kindFilter.value
+  if (kind) list = list.filter(c => c.kind === kind)
+  const q = (searchQuery.value || '').trim().toLowerCase()
+  if (q) {
+    list = list.filter(c =>
+      (c.title || '').toLowerCase().includes(q) ||
+      (c.userId || '').toLowerCase().includes(q) ||
+      (c.rawUserId || '').toLowerCase().includes(q) ||
+      (c.lastModel || '').toLowerCase().includes(q) ||
+      (c.channelName || '').toLowerCase().includes(q),
+    )
+  }
+  return list
 })
-
-function isVisible(conv: ConversationInfo): boolean {
-  const filter = kindFilter.value
-  return !filter || conv.kind === filter
-}
 
 const overrideCount = computed(() => Object.keys(overrides.value).length)
 
@@ -204,6 +228,7 @@ async function handleSetOverride(convId: string, sequence: ChannelSequenceEntry[
     await fetchConversations()
   } catch (e) {
     console.error('[ConversationDashboard] set override error:', e)
+    emit('error', e instanceof Error ? e.message : 'Override failed')
   }
 }
 
@@ -213,12 +238,15 @@ async function handleRemoveOverride(convId: string) {
     await fetchConversations()
   } catch (e) {
     console.error('[ConversationDashboard] remove override error:', e)
+    emit('error', e instanceof Error ? e.message : 'Remove override failed')
   }
 }
 
-// Polling
+// Polling (3s for data, 1s for clock)
 const tick = useGlobalTick(3000, 'ConversationDashboard')
 tick.onTick(() => fetchConversations())
+const clockTick = useGlobalTick(1000, 'ConversationDashboardClock')
+clockTick.onTick(() => { nowMs.value = Date.now() })
 fetchConversations()
 fetchAllChannels()
 </script>
@@ -237,6 +265,25 @@ fetchAllChannels()
 .kind-filter-select {
   max-width: 160px;
   flex: 0 0 auto;
+}
+.conversation-search-field {
+  max-width: 200px;
+  flex: 0 0 auto;
+}
+.conversation-masonry {
+  column-count: 1;
+  column-gap: 16px;
+}
+@media (min-width: 960px) {
+  .conversation-masonry {
+    column-count: 2;
+  }
+}
+.conversation-masonry-item {
+  break-inside: avoid;
+  margin-bottom: 16px;
+  display: inline-block;
+  width: 100%;
 }
 .system-status-indicator {
   display: inline-flex;
