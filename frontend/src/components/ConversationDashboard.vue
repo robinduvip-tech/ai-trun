@@ -271,19 +271,15 @@ fetchAllChannels()
   flex: 0 0 auto;
 }
 .conversation-masonry {
-  column-count: 1;
-  column-gap: 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: start;
 }
 @media (min-width: 960px) {
   .conversation-masonry {
-    column-count: 2;
+    grid-template-columns: 1fr 1fr;
   }
-}
-.conversation-masonry-item {
-  break-inside: avoid;
-  margin-bottom: 16px;
-  display: inline-block;
-  width: 100%;
 }
 .system-status-indicator {
   display: inline-flex;
