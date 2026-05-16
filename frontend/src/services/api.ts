@@ -1461,6 +1461,29 @@ export class ApiService {
       body: JSON.stringify(request)
     })
   }
+
+  // OTA 更新
+  async checkUpdate(): Promise<UpdateStatusResponse> {
+    return this.request('/system/update/check')
+  }
+
+  async applyUpdate(): Promise<{ message: string }> {
+    return this.request('/system/update/apply', { method: 'POST' })
+  }
+}
+
+// OTA 更新状态响应类型
+export interface UpdateStatusResponse {
+  current_version: string
+  latest_version: string
+  has_update: boolean
+  can_update: boolean
+  is_docker: boolean
+  update_disabled_reason: string
+  release_notes: string
+  release_url: string
+  is_updating: boolean
+  checked_at: string
 }
 
 // 健康检查响应类型

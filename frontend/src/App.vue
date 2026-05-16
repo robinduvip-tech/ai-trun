@@ -391,6 +391,9 @@
       @test-protocol="handleTestCapabilityProtocol"
     />
 
+    <!-- OTA 更新对话框 -->
+    <UpdateDialog v-model="systemStore.updateDialogOpen" />
+
     <!-- 添加API密钥对话框 -->
     <v-dialog v-model="dialogStore.showAddKeyModal" max-width="500">
       <v-card rounded="lg">
@@ -449,6 +452,7 @@ import { useI18n } from './i18n'
 import type { SupportedLocale } from './i18n'
 import AddChannelModal from './components/AddChannelModal.vue'
 import CapabilityTestDialog from './components/CapabilityTestDialog.vue'
+import UpdateDialog from './components/UpdateDialog.vue'
 // 异步加载图表组件，减少首屏 JS 体积
 const GlobalStatsChart = defineAsyncComponent(() => import('./components/GlobalStatsChart.vue'))
 import { useAppTheme } from './composables/useTheme'
@@ -1640,7 +1644,25 @@ const checkVersion = async () => {
 
   systemStore.setCheckingVersion(true)
   try {
-    // 先获取当前版本
+    const updateStatus = await api.checkUpdate()
+    systemStore.setUpdateStatus(updateStatus)
+    systemStore.setVersionInfo({
+      currentVersion: updateStatus.current_version,
+      latestVersion: updateStatus.latest_version || null,
+      isLatest: !updateStatus.has_update,
+      hasUpdate: updateStatus.has_update,
+      releaseUrl: updateStatus.release_url || null,
+      lastCheckTime: Date.now(),
+      status: updateStatus.has_update ? 'update-available' : 'latest',
+    })
+    systemStore.setCheckingVersion(false)
+    return
+  } catch (error) {
+    console.warn('Backend version check failed, falling back to GitHub:', error)
+  }
+
+  try {
+    // 后端接口不可用时降级为前端直连 GitHub
     const health = await fetchHealth()
     const currentVersion = health.version?.version || ''
 
@@ -1648,7 +1670,6 @@ const checkVersion = async () => {
       versionService.setCurrentVersion(currentVersion)
       systemStore.setCurrentVersion(currentVersion)
 
-      // 检查 GitHub 最新版本
       const result = await versionService.checkForUpdates()
       systemStore.setVersionInfo(result)
     } else {
@@ -1670,12 +1691,7 @@ const checkVersion = async () => {
 
 // 版本点击处理
 const handleVersionClick = () => {
-  if (
-    (systemStore.versionInfo.status === 'update-available' || systemStore.versionInfo.status === 'latest') &&
-    systemStore.versionInfo.releaseUrl
-  ) {
-    window.open(systemStore.versionInfo.releaseUrl, '_blank', 'noopener,noreferrer')
-  }
+  systemStore.setUpdateDialogOpen(true)
 }
 
 // 监听系统主题变化（setup 阶段注册，onUnmounted 清理，避免泄漏）
