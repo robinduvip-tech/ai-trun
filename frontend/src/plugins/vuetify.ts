@@ -184,6 +184,7 @@ import {
   mdiAccountSwitch,
   mdiChatOutline,
   mdiDragHorizontalVariant,
+  mdiFilterRemove,
   mdiUpdate,
 } from '@mdi/js'
 
@@ -380,6 +381,7 @@ const iconMap: Record<string, string> = {
   'account-switch': mdiAccountSwitch,
   'chat-outline': mdiChatOutline,
   'drag-horizontal-variant': mdiDragHorizontalVariant,
+  'filter-remove': mdiFilterRemove,
   'update': mdiUpdate,
 }
 
