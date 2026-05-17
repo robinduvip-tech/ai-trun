@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+### 改进
+
+- **Override 熔断自动清除** - 当驾驶舱设置的 override（next channel）序列中所有渠道均不可用（熔断）时，调度器自动清除该 override 而非仅跳过，避免前端 NEXT 标签长期残留
+- **渠道熔断状态下发前端** - `GetConversationChannelsByKind` API 返回的渠道信息新增 `circuitOpen` 字段，前端驾驶舱可实时显示渠道熔断状态（FUSED 标记）
+
 ### 修复
 
 - **Responses SSE keep-alive** - 为 Responses 流式代理增加 SSE keep-alive 机制，每 15 秒向下游发送 `: keepalive` 注释行，防止 DeepSeek 等慢上游思考期间触发 Codex 客户端 idle timeout 断连 (#67)

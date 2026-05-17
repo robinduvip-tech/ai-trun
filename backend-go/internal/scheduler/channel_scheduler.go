@@ -470,7 +470,8 @@ func (s *ChannelScheduler) SelectChannel(
 					}
 				}
 			}
-			log.Printf("[%s-Override] 覆盖序列中无可用渠道，回退到默认调度 (user: %s)", prefix, maskUserID(userID))
+			log.Printf("[%s-Override] 覆盖序列中无可用渠道，自动清除覆盖并回退到默认调度 (user: %s)", prefix, maskUserID(userID))
+			s.overrideManager.RemoveOverrideByUser(string(kind), userID)
 		}
 	}
 
@@ -672,10 +673,11 @@ func (s *ChannelScheduler) selectFallbackChannel(
 // ChannelInfo 渠道信息（用于排序）
 // Priority 约定为非负整数，数字越小优先级越高；0 表示未显式配置，将回退为渠道索引。
 type ChannelInfo struct {
-	Index    int
-	Name     string
-	Priority int
-	Status   string
+	Index       int    `json:"index"`
+	Name        string `json:"name"`
+	Priority    int    `json:"priority"`
+	Status      string `json:"status"`
+	CircuitOpen bool   `json:"circuitOpen,omitempty"`
 }
 
 // getActiveChannels 获取活跃渠道列表（按优先级排序）
@@ -1051,7 +1053,14 @@ func (s *ChannelScheduler) IsMultiChannelMode(kind ChannelKind) bool {
 }
 
 func (s *ChannelScheduler) GetConversationChannelsByKind(kind ChannelKind) []ChannelInfo {
-	return s.getActiveChannels(kind, "")
+	channels := s.getActiveChannels(kind, "")
+	for i := range channels {
+		upstream := s.getUpstreamByIndex(channels[i].Index, kind)
+		if upstream != nil {
+			channels[i].CircuitOpen = !s.channelIsHealthy(upstream, kind)
+		}
+	}
+	return channels
 }
 
 // MaskUserIDForLog 掩码 user_id 供跨包日志使用。

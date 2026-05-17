@@ -1525,7 +1525,7 @@ export interface ConversationsResponse {
   conversations: ConversationInfo[]
   total: number
   overrides: Record<string, SequenceOverrideInfo>
-  channelsByKind?: Record<string, { index: number; name: string; priority: number; status: string }[]>
+  channelsByKind?: Record<string, { index: number; name: string; priority: number; status: string; circuitOpen?: boolean }[]>
 }
 
 // OTA 更新状态响应类型

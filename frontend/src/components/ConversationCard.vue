@@ -37,7 +37,7 @@
             'current-channel-chip': ch.index === conversation.currentChannel && !hasOverride,
             'next-channel-chip': ch.index === nextChannel,
           }"
-          :color="ch.index === conversation.currentChannel ? 'primary' : ch.index === nextChannel ? 'success' : undefined"
+          :color="ch.index === conversation.currentChannel ? 'primary' : ch.index === nextChannel ? (nextChannelCircuitOpen ? 'error' : 'success') : undefined"
           :variant="ch.index === conversation.currentChannel ? 'flat' : ch.index === nextChannel ? 'flat' : 'outlined'"
           size="x-small"
           @click.stop="handleQuickOverride(ch)"
@@ -47,7 +47,7 @@
             <v-icon size="10">mdi-check</v-icon>
           </template>
           <template v-else-if="ch.index === nextChannel" #append>
-            <span class="next-label">| NEXT</span>
+            <span class="next-label">| {{ nextChannelCircuitOpen ? 'FUSED' : 'NEXT' }}</span>
           </template>
         </v-chip>
         <v-chip v-if="hiddenCount > 0" size="x-small" variant="text" @click.stop="$emit('toggleExpand')">+{{ hiddenCount }}</v-chip>
@@ -78,8 +78,9 @@
             <span class="seq-arrow">&rarr;</span>
             <span class="text-caption flex-grow-1 channel-name" @click.stop="handleMoveToTop(ch, i)">{{ ch.name }}</span>
             <v-chip v-if="ch.index === conversation.currentChannel" size="x-small" color="primary" variant="flat" class="mr-1">CURRENT</v-chip>
-            <v-chip v-else-if="ch.index === nextChannel" size="x-small" color="success" variant="flat" class="mr-1">NEXT</v-chip>
+            <v-chip v-else-if="ch.index === nextChannel" size="x-small" :color="nextChannelCircuitOpen ? 'error' : 'success'" variant="flat" class="mr-1">{{ nextChannelCircuitOpen ? 'FUSED' : 'NEXT' }}</v-chip>
             <v-chip v-if="ch.status === 'suspended'" size="x-small" variant="flat" class="fused-chip mr-1">FUSED</v-chip>
+            <v-chip v-else-if="ch.circuitOpen" size="x-small" color="error" variant="tonal" class="mr-1">FUSED</v-chip>
             <v-btn icon size="x-small" variant="text" :disabled="i === channelSequence.length - 1" @click.stop="handleDemote(i)">
               <v-icon size="14">mdi-arrow-down</v-icon>
             </v-btn>
@@ -112,6 +113,7 @@ interface ChannelInfo {
   index: number
   name: string
   status: string
+  circuitOpen?: boolean
 }
 
 const props = defineProps<{
@@ -200,7 +202,7 @@ const channelSequence = computed((): ChannelInfo[] => {
   if (props.override?.sequence) {
     return props.override.sequence.map(entry => {
       const ch = props.availableChannels.find(c => c.index === entry.channelIndex)
-      return { index: entry.channelIndex, name: entry.channelName || ch?.name || `Channel ${entry.channelIndex}`, status: ch?.status || 'active' }
+      return { index: entry.channelIndex, name: entry.channelName || ch?.name || `Channel ${entry.channelIndex}`, status: ch?.status || 'active', circuitOpen: ch?.circuitOpen }
     })
   }
   const channels = props.availableChannels.filter(ch => ch.status !== 'disabled')
@@ -226,6 +228,11 @@ const nextChannelInfo = computed(() => {
   if (existing) return existing
   const entry = props.override?.sequence?.[0]
   return { index: nextChannel.value!, name: entry?.channelName || `Channel ${nextChannel.value}`, status: 'active' }
+})
+
+const nextChannelCircuitOpen = computed(() => {
+  if (!nextChannelInfo.value) return false
+  return nextChannelInfo.value.circuitOpen === true
 })
 
 const visibleChannels = computed(() => {

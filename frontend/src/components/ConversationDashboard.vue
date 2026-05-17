@@ -147,7 +147,7 @@ const kindFilterOptions = [
   { title: 'GEMINI', value: 'gemini' },
 ]
 const expandedCards = ref(new Set<string>())
-type DashboardChannel = { index: number; name: string; priority: number; status: string }
+type DashboardChannel = { index: number; name: string; priority: number; status: string; circuitOpen?: boolean }
 
 const channelsByKind = ref<Record<string, DashboardChannel[]>>({})
 
@@ -158,6 +158,7 @@ function normalizeChannel(ch: any): DashboardChannel {
     name: ch.name ?? ch.Name ?? `Channel ${index}`,
     priority: ch.priority ?? ch.Priority ?? index,
     status: ch.status ?? ch.Status ?? 'active',
+    circuitOpen: ch.circuitOpen ?? ch.CircuitOpen ?? false,
   }
 }
 

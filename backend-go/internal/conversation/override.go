@@ -122,6 +122,23 @@ func (om *OverrideManager) RemoveOverride(conversationID string) bool {
 	return true
 }
 
+func (om *OverrideManager) RemoveOverrideByUser(kind, userID string) bool {
+	om.mu.Lock()
+	defer om.mu.Unlock()
+
+	compositeKey := kind + ":" + userID
+	convID, ok := om.userIndex[compositeKey]
+	if !ok {
+		return false
+	}
+
+	delete(om.userIndex, compositeKey)
+	delete(om.overrides, convID)
+
+	log.Printf("[OverrideManager-Remove] 渠道熔断自动清除覆盖: conv=%s (user: %s)", convID, userID)
+	return true
+}
+
 func (om *OverrideManager) GetAllOverrides() map[string]*ChannelSequenceOverride {
 	om.mu.RLock()
 	defer om.mu.RUnlock()
