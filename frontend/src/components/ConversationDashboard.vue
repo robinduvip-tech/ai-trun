@@ -62,11 +62,17 @@
           {{ t('cockpit.noMatches') }}
         </div>
       </v-card>
-      <div class="conversation-masonry">
+      <div
+        ref="masonryEl"
+        class="conversation-masonry"
+        :style="{ height: `${masonryHeight}px` }"
+      >
         <div
           v-for="conv in visibleConversations"
           :key="conv.id"
+          :ref="el => setMasonryItemRef(conv.id, el)"
           class="conversation-masonry-item"
+          :style="getMasonryItemStyle(conv.id)"
         >
           <ConversationCard
             :conversation="conv"
@@ -87,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick, onBeforeUnmount, watch, type ComponentPublicInstance, type StyleValue } from 'vue'
 import { useDisplay } from 'vuetify'
 import { api, type ConversationInfo, type SequenceOverrideInfo, type ChannelSequenceEntry } from '@/services/api'
 import { useGlobalTick } from '@/composables/useGlobalTick'
@@ -119,6 +125,18 @@ const overrides = ref<Record<string, SequenceOverrideInfo>>({})
 const kindFilter = ref('')
 const searchQuery = ref('')
 const nowMs = ref(Date.now())
+const masonryEl = ref<HTMLElement | null>(null)
+const masonryColumnCount = ref(1)
+const masonryHeight = ref(0)
+const masonryItemRects = ref<Record<string, { x: number; y: number; width: number }>>({})
+
+const MASONRY_MIN_COLUMN_WIDTH = 320
+const MASONRY_GAP = 16
+const MASONRY_MAX_COLUMNS = 3
+let masonryResizeObserver: ResizeObserver | undefined
+let masonryLayoutFrame = 0
+const masonryItemElements = new Map<string, HTMLElement>()
+const masonryItemObservers = new Map<string, ResizeObserver>()
 
 const kindFilterOptions = [
   { title: 'ALL', value: '' },
@@ -176,6 +194,93 @@ const visibleConversations = computed(() => {
 })
 
 const overrideCount = computed(() => Object.keys(overrides.value).length)
+
+function updateMasonryColumnCount(width = masonryEl.value?.clientWidth || 0) {
+  const fit = Math.floor((width + MASONRY_GAP) / (MASONRY_MIN_COLUMN_WIDTH + MASONRY_GAP))
+  masonryColumnCount.value = Math.max(1, Math.min(fit, MASONRY_MAX_COLUMNS))
+}
+
+function scheduleMasonryLayout() {
+  if (masonryLayoutFrame) return
+  masonryLayoutFrame = window.requestAnimationFrame(() => {
+    masonryLayoutFrame = 0
+    layoutMasonryItems()
+  })
+}
+
+function layoutMasonryItems() {
+  const containerWidth = masonryEl.value?.clientWidth || 0
+  if (!containerWidth) return
+
+  const columnCount = Math.max(1, masonryColumnCount.value)
+  const columnWidth = (containerWidth - MASONRY_GAP * (columnCount - 1)) / columnCount
+  const columnHeights = Array.from({ length: columnCount }, () => 0)
+  const nextRects: Record<string, { x: number; y: number; width: number }> = {}
+
+  for (const conversation of visibleConversations.value) {
+    let targetColumn = 0
+    for (let i = 1; i < columnHeights.length; i++) {
+      if (columnHeights[i] < columnHeights[targetColumn]) targetColumn = i
+    }
+
+    const element = masonryItemElements.get(conversation.id)
+    const itemHeight = element?.offsetHeight || 0
+    const x = targetColumn * (columnWidth + MASONRY_GAP)
+    const y = columnHeights[targetColumn]
+    nextRects[conversation.id] = { x, y, width: columnWidth }
+    columnHeights[targetColumn] += itemHeight + MASONRY_GAP
+  }
+
+  masonryItemRects.value = nextRects
+  masonryHeight.value = Math.max(0, ...columnHeights) - MASONRY_GAP
+}
+
+function pruneMasonryItemRefs() {
+  const visibleIds = new Set(visibleConversations.value.map(conversation => conversation.id))
+  for (const id of masonryItemElements.keys()) {
+    if (visibleIds.has(id)) continue
+    masonryItemObservers.get(id)?.disconnect()
+    masonryItemObservers.delete(id)
+    masonryItemElements.delete(id)
+  }
+}
+
+function getMasonryItemStyle(id: string): StyleValue {
+  const rect = masonryItemRects.value[id]
+  if (!rect) {
+    return {
+      width: masonryColumnCount.value > 1 ? `${MASONRY_MIN_COLUMN_WIDTH}px` : '100%',
+      transform: 'translate3d(0, 0, 0)',
+      visibility: 'hidden',
+    }
+  }
+  return {
+    width: `${rect.width}px`,
+    transform: `translate3d(${rect.x}px, ${rect.y}px, 0)`,
+  }
+}
+
+function setMasonryItemRef(id: string, el: Element | ComponentPublicInstance | null) {
+  const element = el instanceof HTMLElement ? el : null
+  const existing = masonryItemElements.get(id)
+  if (existing === element) return
+
+  const existingObserver = masonryItemObservers.get(id)
+  existingObserver?.disconnect()
+  masonryItemObservers.delete(id)
+  masonryItemElements.delete(id)
+
+  if (!element) {
+    scheduleMasonryLayout()
+    return
+  }
+
+  masonryItemElements.set(id, element)
+  const observer = new ResizeObserver(() => scheduleMasonryLayout())
+  observer.observe(element)
+  masonryItemObservers.set(id, observer)
+  scheduleMasonryLayout()
+}
 
 function getChannelsForKind(kind: string): DashboardChannel[] {
   return channelsByKind.value[kind] || []
@@ -242,6 +347,39 @@ async function handleRemoveOverride(convId: string) {
   }
 }
 
+// masonryEl 是条件渲染节点（v-else 分支），onMounted 时可能尚未挂载
+// 因此用 watch 监听节点出现/消失，确保 RO 在节点存在时启动、消失时清理
+watch(masonryEl, (el, _prev, onCleanup) => {
+  if (!el) return
+  updateMasonryColumnCount(el.clientWidth)
+  const observer = new ResizeObserver(entries => {
+    const entry = entries[0]
+    if (!entry) return
+    updateMasonryColumnCount(entry.contentRect.width)
+  })
+  observer.observe(el)
+  masonryResizeObserver = observer
+  nextTick(() => scheduleMasonryLayout())
+  onCleanup(() => {
+    observer.disconnect()
+    if (masonryResizeObserver === observer) masonryResizeObserver = undefined
+  })
+}, { flush: 'post' })
+
+onBeforeUnmount(() => {
+  masonryResizeObserver?.disconnect()
+  for (const observer of masonryItemObservers.values()) observer.disconnect()
+  if (masonryLayoutFrame) window.cancelAnimationFrame(masonryLayoutFrame)
+})
+
+watch(visibleConversations, async () => {
+  pruneMasonryItemRefs()
+  await nextTick()
+  scheduleMasonryLayout()
+})
+
+watch(masonryColumnCount, () => scheduleMasonryLayout())
+
 // Polling (3s for data, 1s for clock)
 const tick = useGlobalTick(3000, 'ConversationDashboard')
 tick.onTick(() => fetchConversations())
@@ -271,14 +409,26 @@ fetchAllChannels()
   min-width: 180px;
   flex: 1 1 auto;
 }
+@media (max-width: 499px) {
+  .conversation-search-field {
+    max-width: 160px;
+    min-width: 120px;
+  }
+}
 .conversation-masonry {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr));
-  gap: 16px;
-  align-items: start;
+  position: relative;
   box-sizing: border-box;
   padding-right: 6px;
   padding-bottom: 6px;
+  transition: height 0.16s ease;
+}
+.conversation-masonry-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 0;
+  transition: transform 0.16s ease;
+  will-change: transform;
 }
 .system-status-indicator {
   display: inline-flex;

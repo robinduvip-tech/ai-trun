@@ -66,7 +66,7 @@
       <!-- Expanded: Full channel sequence -->
       <div v-if="expanded" class="mt-3">
         <div class="text-caption text-medium-emphasis mb-1">{{ conversation.lastModel }}</div>
-        <div class="channel-sequence">
+        <div class="channel-sequence" @click.stop>
           <div
             v-for="(ch, i) in channelSequence"
             :key="ch.index"
@@ -93,7 +93,7 @@
       <!-- Row 3: Raw User ID -->
       <div v-if="conversation.rawUserId" class="raw-user-id mt-2 d-flex align-center">
         <span class="text-caption text-medium-emphasis font-weight-mono raw-user-id-text" @click.stop="copyRawUserId">{{ conversation.rawUserId }}</span>
-        <v-btn icon size="x-small" variant="text" class="copy-btn" aria-label="Copy user ID" @click.stop="copyRawUserId">
+        <v-btn icon size="x-small" variant="text" class="copy-btn" aria-label="Copy conversation ID" @click.stop="copyRawUserId">
           <v-icon size="12">mdi-content-copy</v-icon>
         </v-btn>
       </div>
@@ -425,7 +425,12 @@ async function copyRawUserId() {
 .channel-sequence {
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* 限制为约 20 个渠道的高度，超出滚动（每行 40px，留出半行提示下方有更多内容）*/
+  max-height: calc(20 * 40px);
+  /* 滚到头/尾时滚动链透传到外层页面，避免"卡住"感 */
+  overscroll-behavior: auto;
 }
 .channel-item {
   border-bottom: 1px solid rgba(var(--v-border-color), calc(var(--v-border-opacity) * 0.6));

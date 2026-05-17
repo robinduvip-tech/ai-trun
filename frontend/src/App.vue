@@ -70,8 +70,8 @@
 
       <!-- 自定义标题容器 - 替代 v-app-bar-title -->
       <div class="header-title">
-        <!-- 手机端：下拉菜单（仅 xs 断点，< 600px） -->
-        <v-menu v-if="$vuetify.display.xs">
+        <!-- 移动/平板端：下拉菜单（< 960px，6 个 tab 在窄屏会挤压） -->
+        <v-menu v-if="$vuetify.display.smAndDown">
           <template #activator="{ props: menuProps }">
             <v-btn
               v-bind="menuProps"
@@ -125,9 +125,9 @@
 
       <v-spacer/>
 
-      <!-- 版本信息（手机端隐藏） -->
+      <!-- 版本信息（< 500px 隐藏，避免在窄屏挤压右侧按钮） -->
       <div
-        v-if="!$vuetify.display.xs && systemStore.versionInfo.currentVersion"
+        v-if="$vuetify.display.width >= 500 && systemStore.versionInfo.currentVersion"
         class="version-badge"
         :class="{
           'version-clickable': systemStore.versionInfo.status === 'update-available' || systemStore.versionInfo.status === 'latest',
