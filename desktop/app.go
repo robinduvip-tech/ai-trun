@@ -2,21 +2,25 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/BenedictKing/ccx/desktop/internal/backend"
+	"github.com/BenedictKing/ccx/desktop/internal/configservice"
 	"github.com/pkg/browser"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 type DesktopService struct {
-	manager    *backend.Manager
-	app        *application.App
-	mainWindow application.Window
+	manager       *backend.Manager
+	configService *configservice.Service
+	app           *application.App
+	mainWindow    application.Window
 }
 
 func NewDesktopService(manager *backend.Manager) *DesktopService {
-	return &DesktopService{manager: manager}
+	configService, _ := configservice.New(manager.DataDir())
+	return &DesktopService{manager: manager, configService: configService}
 }
 
 func (s *DesktopService) setApp(app *application.App) {
@@ -53,6 +57,40 @@ func (s *DesktopService) RestartService() error {
 
 func (s *DesktopService) GetLogs() []string {
 	return s.manager.Logs()
+}
+
+func (s *DesktopService) GetAgentConfigStatus(platform string) (configservice.AgentConfigStatus, error) {
+	if s.configService == nil {
+		return configservice.AgentConfigStatus{}, fmt.Errorf("配置服务未初始化")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 1200*time.Millisecond)
+	defer cancel()
+	status := s.manager.Status(ctx)
+	return s.configService.GetStatus(platform, status.Port)
+}
+
+func (s *DesktopService) ApplyAgentConfig(platform string) error {
+	if s.configService == nil {
+		return fmt.Errorf("配置服务未初始化")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 1200*time.Millisecond)
+	defer cancel()
+	status := s.manager.Status(ctx)
+	if !status.Running {
+		return fmt.Errorf("请先启动 CCX 服务")
+	}
+	key, err := s.manager.EnsureProxyAccessKey()
+	if err != nil {
+		return err
+	}
+	return s.configService.Apply(platform, status.Port, key)
+}
+
+func (s *DesktopService) RestoreAgentConfig(platform string) error {
+	if s.configService == nil {
+		return fmt.Errorf("配置服务未初始化")
+	}
+	return s.configService.Restore(platform)
 }
 
 func (s *DesktopService) ShowStatusTab() error {

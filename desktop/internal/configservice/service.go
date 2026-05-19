@@ -1,0 +1,591 @@
+package configservice
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+)
+
+const (
+	PlatformClaude = "claude"
+	PlatformCodex  = "codex"
+	stateVersion   = 1
+)
+
+type AgentConfigStatus struct {
+	Platform           string `json:"platform"`
+	Configured         bool   `json:"configured"`
+	MatchesCurrentPort bool   `json:"matchesCurrentPort"`
+	NeedsUpdate        bool   `json:"needsUpdate"`
+	CurrentBaseURL     string `json:"currentBaseUrl"`
+	TargetBaseURL      string `json:"targetBaseUrl"`
+	ConfigPath         string `json:"configPath"`
+	AuthPath           string `json:"authPath,omitempty"`
+	HasState           bool   `json:"hasState"`
+	LastError          string `json:"lastError,omitempty"`
+}
+
+type Service struct {
+	homeDir  string
+	stateDir string
+}
+
+type ClaudeProxyState struct {
+	Version           int     `json:"version"`
+	TargetPath        string  `json:"targetPath"`
+	FileExisted       bool    `json:"fileExisted"`
+	EnvExisted        bool    `json:"envExisted"`
+	OriginalBaseURL   *string `json:"originalBaseUrl,omitempty"`
+	OriginalAuthToken *string `json:"originalAuthToken,omitempty"`
+	OriginalAPIKey    *string `json:"originalApiKey,omitempty"`
+	InjectedBaseURL   string  `json:"injectedBaseUrl"`
+	InjectedAuthToken string  `json:"injectedAuthToken"`
+}
+
+type CodexProxyState struct {
+	Version               int     `json:"version"`
+	ConfigPath            string  `json:"configPath"`
+	AuthPath              string  `json:"authPath"`
+	ConfigFileExisted     bool    `json:"configFileExisted"`
+	AuthFileExisted       bool    `json:"authFileExisted"`
+	OriginalModelProvider *string `json:"originalModelProvider,omitempty"`
+	OriginalProviderBlock *string `json:"originalProviderBlock,omitempty"`
+	OriginalOpenAIAPIKey  *string `json:"originalOpenaiApiKey,omitempty"`
+	InjectedBaseURL       string  `json:"injectedBaseUrl"`
+	InjectedAPIKey        string  `json:"injectedApiKey"`
+}
+
+func New(dataDir string) (*Service, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil || homeDir == "" {
+		return nil, fmt.Errorf("无法定位用户主目录")
+	}
+	if dataDir == "" {
+		dataDir = filepath.Join(homeDir, ".config", "ccx-desktop")
+	}
+	stateDir := filepath.Join(dataDir, "agent-config-state")
+	if err := os.MkdirAll(stateDir, 0o755); err != nil {
+		return nil, err
+	}
+	return &Service{homeDir: homeDir, stateDir: stateDir}, nil
+}
+
+func (s *Service) GetStatus(platform string, port int) (AgentConfigStatus, error) {
+	switch platform {
+	case PlatformClaude:
+		return s.getClaudeStatus(port)
+	case PlatformCodex:
+		return s.getCodexStatus(port)
+	default:
+		return AgentConfigStatus{}, fmt.Errorf("不支持的 agent 平台: %s", platform)
+	}
+}
+
+func (s *Service) Apply(platform string, port int, accessKey string) error {
+	if port == 0 {
+		return fmt.Errorf("CCX 端口未设置")
+	}
+	if accessKey == "" {
+		return fmt.Errorf("PROXY_ACCESS_KEY 为空")
+	}
+	switch platform {
+	case PlatformClaude:
+		return s.applyClaude(port, accessKey)
+	case PlatformCodex:
+		return s.applyCodex(port, accessKey)
+	default:
+		return fmt.Errorf("不支持的 agent 平台: %s", platform)
+	}
+}
+
+func (s *Service) Restore(platform string) error {
+	switch platform {
+	case PlatformClaude:
+		return s.restoreClaude()
+	case PlatformCodex:
+		return s.restoreCodex()
+	default:
+		return fmt.Errorf("不支持的 agent 平台: %s", platform)
+	}
+}
+
+func (s *Service) getClaudeStatus(port int) (AgentConfigStatus, error) {
+	path := s.claudeSettingsPath()
+	target := claudeBaseURL(port)
+	status := AgentConfigStatus{
+		Platform:      PlatformClaude,
+		TargetBaseURL: target,
+		ConfigPath:    path,
+		HasState:      fileExists(s.claudeStatePath()),
+	}
+	data, _, err := readJSONMap(path)
+	if err != nil {
+		status.LastError = err.Error()
+		return status, nil
+	}
+	baseURL, _ := getNestedString(data, "env", "ANTHROPIC_BASE_URL")
+	status.CurrentBaseURL = baseURL
+	status.MatchesCurrentPort = baseURL == target
+	status.Configured = status.MatchesCurrentPort
+	status.NeedsUpdate = baseURL != "" && isLocalBaseURL(baseURL) && !status.MatchesCurrentPort
+	return status, nil
+}
+
+func (s *Service) getCodexStatus(port int) (AgentConfigStatus, error) {
+	path := s.codexConfigPath()
+	authPath := s.codexAuthPath()
+	target := codexBaseURL(port)
+	status := AgentConfigStatus{
+		Platform:      PlatformCodex,
+		TargetBaseURL: target,
+		ConfigPath:    path,
+		AuthPath:      authPath,
+		HasState:      fileExists(s.codexStatePath()),
+	}
+	content, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return status, nil
+		}
+		status.LastError = err.Error()
+		return status, nil
+	}
+	text := string(content)
+	baseURL, _ := extractTomlStringField(extractCodexProviderBlock(text), "base_url")
+	modelProvider, _ := extractTopLevelTomlString(text, "model_provider")
+	status.CurrentBaseURL = baseURL
+	status.MatchesCurrentPort = modelProvider == "ccx" && baseURL == target
+	status.Configured = status.MatchesCurrentPort
+	status.NeedsUpdate = (modelProvider == "ccx" || isLocalBaseURL(baseURL)) && !status.MatchesCurrentPort
+	return status, nil
+}
+
+func (s *Service) applyClaude(port int, accessKey string) error {
+	path := s.claudeSettingsPath()
+	data, existed, err := readJSONMap(path)
+	if err != nil {
+		return err
+	}
+	env, envExisted := data["env"].(map[string]any)
+	if env == nil {
+		env = map[string]any{}
+		data["env"] = env
+	}
+	baseURL, baseOK := env["ANTHROPIC_BASE_URL"].(string)
+	authToken, authOK := env["ANTHROPIC_AUTH_TOKEN"].(string)
+	apiKey, apiOK := env["ANTHROPIC_API_KEY"].(string)
+	state := ClaudeProxyState{
+		Version:           stateVersion,
+		TargetPath:        path,
+		FileExisted:       existed,
+		EnvExisted:        envExisted,
+		OriginalBaseURL:   optionalString(baseURL, baseOK),
+		OriginalAuthToken: optionalString(authToken, authOK),
+		OriginalAPIKey:    optionalString(apiKey, apiOK),
+		InjectedBaseURL:   claudeBaseURL(port),
+		InjectedAuthToken: accessKey,
+	}
+	if existing, ok := s.readClaudeState(); ok {
+		state = existing
+		state.InjectedBaseURL = claudeBaseURL(port)
+		state.InjectedAuthToken = accessKey
+	}
+	if err := writeJSONAtomic(s.claudeStatePath(), state); err != nil {
+		return err
+	}
+	env["ANTHROPIC_BASE_URL"] = state.InjectedBaseURL
+	env["ANTHROPIC_AUTH_TOKEN"] = accessKey
+	delete(env, "ANTHROPIC_API_KEY")
+	if err := writeJSONAtomic(path, data); err != nil {
+		return err
+	}
+	if err := mergeJSONFile(s.claudeConfigPath(), map[string]any{"primaryApiKey": "ccx"}); err != nil {
+		return err
+	}
+	return mergeJSONFile(s.claudeRootConfigPath(), map[string]any{"hasCompletedOnboarding": true})
+}
+
+func (s *Service) restoreClaude() error {
+	var state ClaudeProxyState
+	if err := readJSONFile(s.claudeStatePath(), &state); err != nil {
+		return err
+	}
+	if !state.FileExisted {
+		if err := os.Remove(state.TargetPath); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		return os.Remove(s.claudeStatePath())
+	}
+	data, _, err := readJSONMap(state.TargetPath)
+	if err != nil {
+		return err
+	}
+	env, _ := data["env"].(map[string]any)
+	if env == nil {
+		env = map[string]any{}
+		data["env"] = env
+	}
+	restoreStringField(env, "ANTHROPIC_BASE_URL", state.OriginalBaseURL)
+	restoreStringField(env, "ANTHROPIC_AUTH_TOKEN", state.OriginalAuthToken)
+	restoreStringField(env, "ANTHROPIC_API_KEY", state.OriginalAPIKey)
+	if !state.EnvExisted && len(env) == 0 {
+		delete(data, "env")
+	}
+	if err := writeJSONAtomic(state.TargetPath, data); err != nil {
+		return err
+	}
+	return os.Remove(s.claudeStatePath())
+}
+
+func (s *Service) applyCodex(port int, accessKey string) error {
+	configPath := s.codexConfigPath()
+	authPath := s.codexAuthPath()
+	configContent, configExisted, err := readTextFile(configPath)
+	if err != nil {
+		return err
+	}
+	authData, authExisted, err := readJSONMap(authPath)
+	if err != nil {
+		return err
+	}
+	modelProvider, mpOK := extractTopLevelTomlString(configContent, "model_provider")
+	providerBlock, blockOK := extractNamedTomlBlock(configContent, "model_providers.ccx")
+	apiKey, keyOK := authData["OPENAI_API_KEY"].(string)
+	state := CodexProxyState{
+		Version:               stateVersion,
+		ConfigPath:            configPath,
+		AuthPath:              authPath,
+		ConfigFileExisted:     configExisted,
+		AuthFileExisted:       authExisted,
+		OriginalModelProvider: optionalString(modelProvider, mpOK),
+		OriginalProviderBlock: optionalString(providerBlock, blockOK),
+		OriginalOpenAIAPIKey:  optionalString(apiKey, keyOK),
+		InjectedBaseURL:       codexBaseURL(port),
+		InjectedAPIKey:        accessKey,
+	}
+	if existing, ok := s.readCodexState(); ok {
+		state = existing
+		state.InjectedBaseURL = codexBaseURL(port)
+		state.InjectedAPIKey = accessKey
+	}
+	if err := writeJSONAtomic(s.codexStatePath(), state); err != nil {
+		return err
+	}
+	updated := upsertTopLevelTomlString(configContent, "model_provider", "ccx")
+	updated = upsertNamedTomlBlock(updated, "model_providers.ccx", codexProviderBlock(state.InjectedBaseURL))
+	if err := writeTextAtomic(configPath, updated); err != nil {
+		return err
+	}
+	authData["OPENAI_API_KEY"] = accessKey
+	return writeJSONAtomic(authPath, authData)
+}
+
+func (s *Service) restoreCodex() error {
+	var state CodexProxyState
+	if err := readJSONFile(s.codexStatePath(), &state); err != nil {
+		return err
+	}
+	if state.ConfigFileExisted {
+		content, _, err := readTextFile(state.ConfigPath)
+		if err != nil {
+			return err
+		}
+		content = restoreTopLevelTomlString(content, "model_provider", state.OriginalModelProvider)
+		content = restoreNamedTomlBlock(content, "model_providers.ccx", state.OriginalProviderBlock)
+		if err := writeTextAtomic(state.ConfigPath, content); err != nil {
+			return err
+		}
+	} else if err := os.Remove(state.ConfigPath); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if state.AuthFileExisted {
+		authData, _, err := readJSONMap(state.AuthPath)
+		if err != nil {
+			return err
+		}
+		restoreStringField(authData, "OPENAI_API_KEY", state.OriginalOpenAIAPIKey)
+		if err := writeJSONAtomic(state.AuthPath, authData); err != nil {
+			return err
+		}
+	} else if err := os.Remove(state.AuthPath); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return os.Remove(s.codexStatePath())
+}
+
+func (s *Service) claudeSettingsPath() string {
+	return filepath.Join(s.homeDir, ".claude", "settings.json")
+}
+
+func (s *Service) claudeConfigPath() string {
+	return filepath.Join(s.homeDir, ".claude", "config.json")
+}
+
+func (s *Service) claudeRootConfigPath() string {
+	return filepath.Join(s.homeDir, ".claude.json")
+}
+
+func (s *Service) codexConfigPath() string {
+	return filepath.Join(s.homeDir, ".codex", "config.toml")
+}
+
+func (s *Service) codexAuthPath() string {
+	return filepath.Join(s.homeDir, ".codex", "auth.json")
+}
+
+func (s *Service) claudeStatePath() string {
+	return filepath.Join(s.stateDir, "claude.json")
+}
+
+func (s *Service) codexStatePath() string {
+	return filepath.Join(s.stateDir, "codex.json")
+}
+
+func (s *Service) readClaudeState() (ClaudeProxyState, bool) {
+	var state ClaudeProxyState
+	if err := readJSONFile(s.claudeStatePath(), &state); err != nil {
+		return ClaudeProxyState{}, false
+	}
+	return state, true
+}
+
+func (s *Service) readCodexState() (CodexProxyState, bool) {
+	var state CodexProxyState
+	if err := readJSONFile(s.codexStatePath(), &state); err != nil {
+		return CodexProxyState{}, false
+	}
+	return state, true
+}
+
+func claudeBaseURL(port int) string {
+	return fmt.Sprintf("http://127.0.0.1:%d", port)
+}
+
+func codexBaseURL(port int) string {
+	return fmt.Sprintf("http://127.0.0.1:%d/v1", port)
+}
+
+func codexProviderBlock(baseURL string) string {
+	return fmt.Sprintf(`[model_providers.ccx]
+name = "CCX Proxy"
+base_url = %q
+wire_api = "responses"
+temp_env_key = "OPENAI_API_KEY"
+requires_openai_auth = false
+`, baseURL)
+}
+
+func readJSONMap(path string) (map[string]any, bool, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return map[string]any{}, false, nil
+		}
+		return nil, false, err
+	}
+	if len(strings.TrimSpace(string(content))) == 0 {
+		return map[string]any{}, true, nil
+	}
+	var data map[string]any
+	if err := json.Unmarshal(content, &data); err != nil {
+		return nil, true, err
+	}
+	if data == nil {
+		data = map[string]any{}
+	}
+	return data, true, nil
+}
+
+func readJSONFile(path string, dest any) error {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(content, dest)
+}
+
+func readTextFile(path string) (string, bool, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", false, nil
+		}
+		return "", false, err
+	}
+	return string(content), true, nil
+}
+
+func mergeJSONFile(path string, patch map[string]any) error {
+	data, _, err := readJSONMap(path)
+	if err != nil {
+		return err
+	}
+	for key, value := range patch {
+		data[key] = value
+	}
+	return writeJSONAtomic(path, data)
+}
+
+func writeJSONAtomic(path string, data any) error {
+	content, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return err
+	}
+	content = append(content, '\n')
+	return writeBytesAtomic(path, content)
+}
+
+func writeTextAtomic(path string, content string) error {
+	if content != "" && !strings.HasSuffix(content, "\n") {
+		content += "\n"
+	}
+	return writeBytesAtomic(path, []byte(content))
+}
+
+func writeBytesAtomic(path string, content []byte) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(path), ".tmp-*")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+	defer func() { _ = os.Remove(tmpPath) }()
+	if _, err := tmp.Write(content); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmpPath, path)
+}
+
+func getNestedString(data map[string]any, keys ...string) (string, bool) {
+	var current any = data
+	for _, key := range keys {
+		m, ok := current.(map[string]any)
+		if !ok {
+			return "", false
+		}
+		current, ok = m[key]
+		if !ok {
+			return "", false
+		}
+	}
+	value, ok := current.(string)
+	return value, ok
+}
+
+func optionalString(value string, ok bool) *string {
+	if !ok {
+		return nil
+	}
+	return &value
+}
+
+func restoreStringField(data map[string]any, key string, value *string) {
+	if value == nil {
+		delete(data, key)
+		return
+	}
+	data[key] = *value
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+func isLocalBaseURL(value string) bool {
+	return strings.Contains(value, "127.0.0.1") || strings.Contains(value, "localhost")
+}
+
+func extractCodexProviderBlock(content string) string {
+	block, _ := extractNamedTomlBlock(content, "model_providers.ccx")
+	return block
+}
+
+func extractTopLevelTomlString(content string, key string) (string, bool) {
+	re := regexp.MustCompile(`(?m)^\s*` + regexp.QuoteMeta(key) + `\s*=\s*"([^"]*)"\s*(?:#.*)?$`)
+	match := re.FindStringSubmatch(content)
+	if len(match) < 2 {
+		return "", false
+	}
+	return match[1], true
+}
+
+func extractTomlStringField(content string, key string) (string, bool) {
+	re := regexp.MustCompile(`(?m)^\s*` + regexp.QuoteMeta(key) + `\s*=\s*"([^"]*)"\s*(?:#.*)?$`)
+	match := re.FindStringSubmatch(content)
+	if len(match) < 2 {
+		return "", false
+	}
+	return match[1], true
+}
+
+func extractNamedTomlBlock(content string, table string) (string, bool) {
+	re := regexp.MustCompile(`(?ms)^\[` + regexp.QuoteMeta(table) + `\]\n.*?(?:\n(?=\[[^\n]+\])|\z)`)
+	match := re.FindString(content)
+	if match == "" {
+		return "", false
+	}
+	return strings.TrimRight(match, "\n"), true
+}
+
+func upsertTopLevelTomlString(content string, key string, value string) string {
+	line := fmt.Sprintf("%s = %q", key, value)
+	re := regexp.MustCompile(`(?m)^\s*` + regexp.QuoteMeta(key) + `\s*=.*$`)
+	if re.MatchString(content) {
+		return re.ReplaceAllString(content, line)
+	}
+	if strings.TrimSpace(content) == "" {
+		return line + "\n"
+	}
+	return line + "\n" + content
+}
+
+func restoreTopLevelTomlString(content string, key string, original *string) string {
+	re := regexp.MustCompile(`(?m)^\s*` + regexp.QuoteMeta(key) + `\s*=.*(?:\n|$)`)
+	if original == nil {
+		return re.ReplaceAllString(content, "")
+	}
+	line := fmt.Sprintf("%s = %q", key, *original)
+	if re.MatchString(content) {
+		return re.ReplaceAllString(content, line+"\n")
+	}
+	return line + "\n" + content
+}
+
+func upsertNamedTomlBlock(content string, table string, block string) string {
+	re := regexp.MustCompile(`(?ms)^\[` + regexp.QuoteMeta(table) + `\]\n.*?(?:\n(?=\[[^\n]+\])|\z)`)
+	block = strings.TrimRight(block, "\n")
+	if re.MatchString(content) {
+		return re.ReplaceAllString(content, block+"\n")
+	}
+	content = strings.TrimRight(content, "\n")
+	if content == "" {
+		return block + "\n"
+	}
+	return content + "\n\n" + block + "\n"
+}
+
+func restoreNamedTomlBlock(content string, table string, original *string) string {
+	re := regexp.MustCompile(`(?ms)^\[` + regexp.QuoteMeta(table) + `\]\n.*?(?:\n(?=\[[^\n]+\])|\z)`)
+	if original == nil {
+		return strings.TrimRight(re.ReplaceAllString(content, ""), "\n") + "\n"
+	}
+	block := strings.TrimRight(*original, "\n") + "\n"
+	if re.MatchString(content) {
+		return re.ReplaceAllString(content, block)
+	}
+	content = strings.TrimRight(content, "\n")
+	if content == "" {
+		return block
+	}
+	return content + "\n\n" + block
+}

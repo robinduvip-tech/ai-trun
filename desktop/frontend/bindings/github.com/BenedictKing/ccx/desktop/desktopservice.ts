@@ -8,16 +8,29 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
 import * as backend$0 from "./internal/backend/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as configservice$0 from "./internal/configservice/models.js";
+
+export function ApplyAgentConfig(platform: string): $CancellablePromise<void> {
+    return $Call.ByID(1194974726, platform);
+}
+
+export function GetAgentConfigStatus(platform: string): $CancellablePromise<configservice$0.AgentConfigStatus> {
+    return $Call.ByID(3013260948, platform).then(($result: any) => {
+        return $$createType0($result);
+    });
+}
 
 export function GetLogs(): $CancellablePromise<string[]> {
     return $Call.ByID(1688970508).then(($result: any) => {
-        return $$createType0($result);
+        return $$createType1($result);
     });
 }
 
 export function GetStatus(): $CancellablePromise<backend$0.Status> {
     return $Call.ByID(2036427713).then(($result: any) => {
-        return $$createType1($result);
+        return $$createType2($result);
     });
 }
 
@@ -27,6 +40,10 @@ export function OpenWebUIInBrowser(): $CancellablePromise<void> {
 
 export function RestartService(): $CancellablePromise<void> {
     return $Call.ByID(194936479);
+}
+
+export function RestoreAgentConfig(platform: string): $CancellablePromise<void> {
+    return $Call.ByID(3544811620, platform);
 }
 
 export function ShowStatusTab(): $CancellablePromise<void> {
@@ -50,5 +67,6 @@ export function StopService(): $CancellablePromise<void> {
 }
 
 // Private type creation functions
-const $$createType0 = $Create.Array($Create.Any);
-const $$createType1 = backend$0.Status.createFrom;
+const $$createType0 = configservice$0.AgentConfigStatus.createFrom;
+const $$createType1 = $Create.Array($Create.Any);
+const $$createType2 = backend$0.Status.createFrom;

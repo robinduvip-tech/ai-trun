@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { Events } from '@wailsio/runtime'
-import { GetStatus, OpenWebUIInBrowser, RestartService, ShowStatusTab, ShowWebUITab, StartService, StopService } from '../bindings/github.com/BenedictKing/ccx/desktop/desktopservice'
+import { ApplyAgentConfig, GetAgentConfigStatus, GetStatus, OpenWebUIInBrowser, RestartService, RestoreAgentConfig, ShowStatusTab, ShowWebUITab, StartService, StopService } from '../bindings/github.com/BenedictKing/ccx/desktop/desktopservice'
 
 type HealthInfo = {
   status?: string
@@ -32,7 +32,22 @@ type DesktopStatus = {
   logs: string[]
 }
 
-const activeTab = ref<'status' | 'web'>('status')
+type AgentPlatform = 'claude' | 'codex'
+
+type AgentConfigStatus = {
+  platform: AgentPlatform
+  configured: boolean
+  matchesCurrentPort: boolean
+  needsUpdate: boolean
+  currentBaseUrl: string
+  targetBaseUrl: string
+  configPath: string
+  authPath?: string
+  hasState: boolean
+  lastError?: string
+}
+
+const activeTab = ref<'status' | 'web' | 'settings'>('status')
 const status = ref<DesktopStatus>({
   running: false,
   starting: false,
@@ -45,7 +60,12 @@ const status = ref<DesktopStatus>({
   logs: [],
 })
 const loading = ref(false)
+const configLoading = ref(false)
 const actionError = ref('')
+const agentStatuses = ref<Record<AgentPlatform, AgentConfigStatus | null>>({
+  claude: null,
+  codex: null,
+})
 
 let statusInterval: number | undefined
 let unsubscribeTab: (() => void) | undefined
@@ -62,6 +82,74 @@ const syncStatus = async () => {
   } catch (error) {
     actionError.value = error instanceof Error ? error.message : String(error)
   }
+}
+
+const agentPlatforms: AgentPlatform[] = ['claude', 'codex']
+
+const agentLabels: Record<AgentPlatform, string> = {
+  claude: 'Claude Code',
+  codex: 'Codex',
+}
+
+const loadAgentStatuses = async () => {
+  configLoading.value = true
+  try {
+    const [claude, codex] = await Promise.all([
+      GetAgentConfigStatus('claude') as Promise<AgentConfigStatus>,
+      GetAgentConfigStatus('codex') as Promise<AgentConfigStatus>,
+    ])
+    agentStatuses.value = { claude, codex }
+  } catch (error) {
+    actionError.value = error instanceof Error ? error.message : String(error)
+  } finally {
+    configLoading.value = false
+  }
+}
+
+const showSettingsTab = async () => {
+  activeTab.value = 'settings'
+  await syncStatus()
+  await loadAgentStatuses()
+}
+
+const applyAgent = async (platform: AgentPlatform) => {
+  actionError.value = ''
+  configLoading.value = true
+  try {
+    await ApplyAgentConfig(platform)
+    await loadAgentStatuses()
+  } catch (error) {
+    actionError.value = error instanceof Error ? error.message : String(error)
+  } finally {
+    configLoading.value = false
+  }
+}
+
+const restoreAgent = async (platform: AgentPlatform) => {
+  actionError.value = ''
+  configLoading.value = true
+  try {
+    await RestoreAgentConfig(platform)
+    await loadAgentStatuses()
+  } catch (error) {
+    actionError.value = error instanceof Error ? error.message : String(error)
+  } finally {
+    configLoading.value = false
+  }
+}
+
+const agentStatusText = (item: AgentConfigStatus | null) => {
+  if (!item) return '检测中'
+  if (item.configured) return '已配置'
+  if (item.needsUpdate) return '端口不匹配'
+  return '未配置'
+}
+
+const agentStatusClass = (item: AgentConfigStatus | null) => {
+  if (!item) return 'starting'
+  if (item.configured) return 'running'
+  if (item.needsUpdate) return 'starting'
+  return 'stopped'
 }
 
 const refresh = async () => {
@@ -148,6 +236,9 @@ onBeforeUnmount(() => {
       <button :class="['tab', activeTab === 'web' ? 'active' : '']" @click="showWebTab">
         CCX Web UI
       </button>
+      <button :class="['tab', activeTab === 'settings' ? 'active' : '']" @click="showSettingsTab">
+        设置
+      </button>
     </nav>
 
     <section v-if="activeTab === 'status'" class="panel">
@@ -185,7 +276,7 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-    <section v-else class="web-panel panel">
+    <section v-else-if="activeTab === 'web'" class="web-panel panel">
       <header class="web-header">
         <div>
           <p class="eyebrow">内置标签页</p>
@@ -204,6 +295,53 @@ onBeforeUnmount(() => {
         <button @click="showWebTab" :disabled="loading">立即启动</button>
       </div>
     </section>
+
+    <section v-else class="panel settings-panel">
+      <header class="web-header">
+        <div>
+          <p class="eyebrow">Agent 配置</p>
+          <h2>Claude Code / Codex</h2>
+        </div>
+        <button @click="loadAgentStatuses" :disabled="configLoading">刷新状态</button>
+      </header>
+
+      <p class="hint">
+        将本机 CLI 工具配置为访问当前 CCX 网关。应用前请先启动 CCX 服务，恢复只回滚 Desktop 写入的字段。
+      </p>
+      <p v-if="actionError" class="error">{{ actionError }}</p>
+
+      <div class="agent-grid">
+        <article v-for="platform in agentPlatforms" :key="platform" class="agent-card">
+          <header class="agent-card-header">
+            <div>
+              <p class="eyebrow">{{ platform }}</p>
+              <h3>{{ agentLabels[platform] }}</h3>
+            </div>
+            <span :class="['status-pill', agentStatusClass(agentStatuses[platform])]">
+              {{ agentStatusText(agentStatuses[platform]) }}
+            </span>
+          </header>
+
+          <div class="details compact">
+            <div><span>当前 URL</span><code>{{ agentStatuses[platform]?.currentBaseUrl || '未设置' }}</code></div>
+            <div><span>目标 URL</span><code>{{ agentStatuses[platform]?.targetBaseUrl || '--' }}</code></div>
+            <div><span>配置文件</span><code>{{ agentStatuses[platform]?.configPath || '--' }}</code></div>
+            <div v-if="agentStatuses[platform]?.authPath"><span>认证文件</span><code>{{ agentStatuses[platform]?.authPath }}</code></div>
+          </div>
+
+          <p v-if="agentStatuses[platform]?.lastError" class="error">{{ agentStatuses[platform]?.lastError }}</p>
+
+          <div class="actions">
+            <button @click="applyAgent(platform)" :disabled="configLoading || !status.running">
+              应用 CCX 配置
+            </button>
+            <button @click="restoreAgent(platform)" :disabled="configLoading || !agentStatuses[platform]?.hasState">
+              恢复原始配置
+            </button>
+          </div>
+        </article>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -220,13 +358,15 @@ onBeforeUnmount(() => {
 .metrics,
 .actions,
 .details,
-.tabs {
+.tabs,
+.agent-card-header {
   display: flex;
   gap: 12px;
 }
 
 .topbar,
-.web-header {
+.web-header,
+.agent-card-header {
   align-items: center;
   justify-content: space-between;
 }
@@ -241,6 +381,7 @@ onBeforeUnmount(() => {
 
 h1,
 h2,
+h3,
 p {
   margin: 0;
 }
@@ -274,7 +415,8 @@ p {
 .tab,
 .actions button,
 .web-actions button,
-.placeholder button {
+.placeholder button,
+.web-header button {
   border: 0;
   border-radius: 10px;
   padding: 10px 14px;
@@ -291,7 +433,8 @@ p {
 .tab:disabled,
 .actions button:disabled,
 .web-actions button:disabled,
-.placeholder button:disabled {
+.placeholder button:disabled,
+.web-header button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
@@ -311,7 +454,8 @@ p {
 }
 
 .metrics article,
-.details div {
+.details div,
+.agent-card {
   flex: 1 1 180px;
   padding: 14px;
   border-radius: 14px;
@@ -370,5 +514,33 @@ p {
   display: grid;
   gap: 12px;
   justify-items: start;
+}
+
+.hint {
+  color: #a8b7d6;
+}
+
+.settings-panel,
+.agent-card {
+  align-items: stretch;
+}
+
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.agent-card {
+  display: grid;
+  gap: 14px;
+}
+
+.details.compact {
+  display: grid;
+}
+
+.details.compact div {
+  flex: unset;
 }
 </style>

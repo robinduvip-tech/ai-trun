@@ -3,6 +3,7 @@ package backend
 import (
 	"bufio"
 	"context"
+	"crypto/rand"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -320,6 +321,26 @@ func (m *Manager) WebURL() string {
 	return m.urlLocked()
 }
 
+func (m *Manager) DataDir() string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.dataDir
+}
+
+func (m *Manager) CurrentPort() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.port
+}
+
+func (m *Manager) EnsureProxyAccessKey() (string, error) {
+	m.mu.Lock()
+	dataDir := m.dataDir
+	rootDir := m.rootDir
+	m.mu.Unlock()
+	return ensureProxyAccessKey(dataDir, rootDir)
+}
+
 func (m *Manager) WaitHealthy(ctx context.Context, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
@@ -425,6 +446,11 @@ func (m *Manager) buildEnv(port int) []string {
 	env = setEnv(env, "PORT", strconv.Itoa(port))
 	env = setEnv(env, "ENABLE_WEB_UI", "true")
 	env = setEnv(env, "ENV", "production")
+	if key, err := m.EnsureProxyAccessKey(); err == nil && key != "" {
+		env = setEnv(env, "PROXY_ACCESS_KEY", key)
+	} else if err != nil {
+		m.appendLog("[Desktop-Backend] 生成 PROXY_ACCESS_KEY 失败: " + err.Error())
+	}
 	return env
 }
 
@@ -503,6 +529,82 @@ func (m *Manager) urlLocked() string {
 		port = defaultPort
 	}
 	return fmt.Sprintf("http://127.0.0.1:%d", port)
+}
+
+func ensureProxyAccessKey(dataDir string, rootDir string) (string, error) {
+	if key := os.Getenv("PROXY_ACCESS_KEY"); strings.TrimSpace(key) != "" {
+		return strings.TrimSpace(key), nil
+	}
+	candidates := uniquePaths([]string{
+		filepath.Join(dataDir, ".env"),
+		filepath.Join(rootDir, ".env"),
+		filepath.Join(rootDir, "backend-go", ".env"),
+	})
+	for _, candidate := range candidates {
+		key, err := readProxyAccessKey(candidate)
+		if err != nil {
+			return "", err
+		}
+		if key != "" {
+			return key, nil
+		}
+	}
+	key, err := generateProxyAccessKey()
+	if err != nil {
+		return "", err
+	}
+	if err := appendEnvValue(filepath.Join(dataDir, ".env"), "PROXY_ACCESS_KEY", key); err != nil {
+		return "", err
+	}
+	return key, nil
+}
+
+func readProxyAccessKey(path string) (string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	for _, line := range strings.Split(string(content), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") || !strings.HasPrefix(line, "PROXY_ACCESS_KEY=") {
+			continue
+		}
+		value := strings.TrimSpace(strings.TrimPrefix(line, "PROXY_ACCESS_KEY="))
+		return strings.Trim(value, `"'`), nil
+	}
+	return "", nil
+}
+
+func appendEnvValue(path string, key string, value string) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	content := ""
+	if existing, err := os.ReadFile(path); err == nil {
+		content = string(existing)
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	line := fmt.Sprintf("%s=%s", key, value)
+	if strings.TrimSpace(content) == "" {
+		return os.WriteFile(path, []byte(line+"\n"), 0o600)
+	}
+	if !strings.HasSuffix(content, "\n") {
+		content += "\n"
+	}
+	content += line + "\n"
+	return os.WriteFile(path, []byte(content), 0o600)
+}
+
+func generateProxyAccessKey() (string, error) {
+	buf := make([]byte, 24)
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+	return "ccx-" + hex.EncodeToString(buf), nil
 }
 
 func detectRootDir() string {
