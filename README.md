@@ -194,6 +194,10 @@ Join the QQ group for discussion: **642217364**
 
 <img src="docs/qrcode_1769645166806.png" width="300" alt="QQ Group QR Code">
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=BenedictKing/ccx&type=Date)](https://www.star-history.com/#BenedictKing/ccx&Date)
+
 ## License
 
 MIT

@@ -194,6 +194,10 @@ make dev
 
 <img src="docs/qrcode_1769645166806.png" width="300" alt="QQ群二维码">
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=BenedictKing/ccx&type=Date)](https://www.star-history.com/#BenedictKing/ccx&Date)
+
 ## 许可证
 
 MIT
