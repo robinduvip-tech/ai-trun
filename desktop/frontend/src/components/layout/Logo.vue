@@ -38,15 +38,15 @@ const sizeStyle = computed(() => {
         </filter>
       </defs>
 
-      <!-- 1. 外部高科技数据循环轨道 (Orbit) -->
+      <!-- 1. 外部数据循环轨道 (Orbit) - 缩收半径至 38px 以防止在 24px 微尺寸下贴边被视口物理裁剪，上调亮度 -->
       <circle
         cx="50"
         cy="50"
-        r="44"
+        r="38"
         stroke="url(#ccx-logo-grad)"
-        stroke-width="1.5"
-        stroke-dasharray="12 8 4 8"
-        class="opacity-25"
+        stroke-width="2"
+        stroke-dasharray="10 6 3 6"
+        class="opacity-65"
         :class="{ 'animate-orbit-rotate': animated }"
       />
 

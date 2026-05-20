@@ -38,14 +38,14 @@ const sizeStyle = computed(() => {
         </filter>
       </defs>
 
-      <!-- 1. 外部数据循环轨道 -->
+      <!-- 1. 外部数据循环轨道 - 缩收半径至 38px 防止物理贴边裁剪 -->
       <circle
         cx="50"
         cy="50"
-        r="44"
+        r="38"
         stroke="url(#web-logo-grad)"
-        stroke-width="1.8"
-        stroke-dasharray="12 8 4 8"
+        stroke-width="2.2"
+        stroke-dasharray="10 6 3 6"
         class="ccx-orbit"
         :class="{ 'animate-spin-slow': animated }"
       />
