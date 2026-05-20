@@ -49,9 +49,9 @@ const handleDaemonAction = async () => {
 <template>
   <aside class="w-68 flex flex-col h-full bg-slate-950/40 border-r border-slate-900 backdrop-blur-3xl shrink-0 select-none">
     <!-- macOS 交通灯避让区 & 标题栏拖拽区域 -->
-    <div class="h-14 w-full flex items-center px-4 shrink-0" data-wails-drag>
-      <!-- 在非 macOS 平台可以显示 Logo，macOS 下作为窗口拖拽区域，留足 pl-16 避让 macOS 交通灯 -->
-      <div class="flex items-center gap-2.5 mt-2.5 pl-15">
+    <div class="h-14 w-full flex items-center justify-end px-5 shrink-0" data-wails-drag>
+      <!-- 将标题完美靠右边对齐，为左侧 macOS 交通灯腾出完全开阔、无阻挡的绝佳操作空间 -->
+      <div class="flex items-center gap-2 mt-2">
         <div class="p-1 rounded-md bg-blue-600/10 border border-blue-500/20">
           <Cpu class="w-4 h-4 text-blue-500" />
         </div>
