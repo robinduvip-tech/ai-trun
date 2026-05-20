@@ -855,8 +855,8 @@
               </div>
             </v-col>
 
-            <!-- 回传 Reasoning Content（仅 Messages 渠道 + claude 服务类型显示） -->
-            <v-col v-if="props.channelType === 'messages' && form.serviceType === 'claude'" cols="12">
+            <!-- 回传 Reasoning Content（仅 Messages/Chat 渠道 + claude 服务类型显示） -->
+            <v-col v-if="(props.channelType === 'messages' || props.channelType === 'chat') && form.serviceType === 'claude'" cols="12">
               <div class="d-flex align-center justify-space-between ga-5">
                 <div class="d-flex align-center ga-2" style="min-width: 0; flex: 1 1 auto;">
                   <v-icon color="secondary">mdi-brain</v-icon>

@@ -716,6 +716,10 @@ func GetChannelDashboard(cfgManager *config.ConfigManager, sch *scheduler.Channe
 				channel["stripEmptyTextBlocks"] = up.StripEmptyTextBlocks
 			}
 
+			if channelType == "chat" {
+				channel["passbackReasoningContent"] = up.PassbackReasoningContent
+			}
+
 			channels[i] = channel
 		}
 

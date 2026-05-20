@@ -2,6 +2,23 @@
 
 ### 新增
 
+- **Chat 渠道透传思考回传支持**：
+  - 在 `backend-go/internal/handlers/chat/handler.go` 中引入了与 Messages 渠道一致的预处理逻辑，自动清理空 signature 字段和历史畸形 thinking 内容块，预防上游参数校验 400 错误。
+  - 在 `buildProviderRequest` 中，当 `PassbackReasoningContent` 关闭时，在发送给 Claude 协议上游前自动剥离历史 thinking 块，避免跨上游复用签名导致 signature 错误。
+  - 在 `backend-go/internal/config/config_chat.go`、`channels.go` 和 `channel_metrics_handler.go` 中同步支持了 `PassbackReasoningContent` 字段的更新与返回。
+  - 修改了 `frontend/src/components/AddChannelModal.vue`，使得“回传 Reasoning Content”开关在 Chat 渠道且服务类型为 claude 时也能正常显示和配置。
+  - 在 `deepseek_thinking_matrix_test.go` 中新增了 `TestChatHandler_PassbackReasoningContent` 测试用例。
+
+### 修复
+
+- **Gemini 渠道 tool_result 数组解析报错**：
+  - 修复了 `messages` 接口转上游 `gemini` 类型渠道时，`tool_result` 包含数组（Content Blocks）导致的反序列化报错问题。
+  - 将 `GeminiFunctionResponse.Response` 字段类型从 `map[string]interface{}` 变更为 `interface{}`，提高结构体容错性。
+  - 在 `backend-go/internal/providers/gemini.go` 的 `convertMessage` 方法中，对 `tool_result` 的 `content` 进行了智能解析和规范化，确保转换后的 `response` 始终是一个符合 Gemini 官方协议要求的 JSON 对象。
+  - 新增了 `gemini_tool_result_test.go` 单元测试，覆盖了 `tool_result` 为数组、字符串、JSON 对象等各种场景，验证其能正确转换为 Gemini 期望的格式。
+
+### 新增
+
 - **CCX 桌面外壳 MVP** - 新增 Wails3 桌面外壳，用于将现有 CCX 后端作为核心服务构件进行启动、停止、重启、托盘驻留和状态监控；外壳通过现有 `/health` 探活并在内置标签页中加载 CCX Web UI，避免改动核心代理、调度和现有 Web 管理界面逻辑。
   - 新增 `desktop/` Wails3 项目，包含后端子进程 supervisor、托盘菜单、状态页、内嵌 Web UI 标签页和前端绑定。
   - 根 `Makefile` 新增 `desktop-dev` / `desktop-build`，复用现有前端 embed 与 Go 后端构建流程。

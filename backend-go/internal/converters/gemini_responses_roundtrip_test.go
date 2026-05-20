@@ -56,8 +56,12 @@ func TestResponsesToGeminiRequest_PreservesFunctionItems(t *testing.T) {
 	if respPart.Name != "weather_call" {
 		t.Fatalf("expected function response name weather_call, got %q", respPart.Name)
 	}
-	if respPart.Response["result"] != "Sunny, 72°F" {
-		t.Fatalf("expected tool result preserved, got %#v", respPart.Response["result"])
+	responseMap, ok := respPart.Response.(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected response to be map[string]interface{}, got %T", respPart.Response)
+	}
+	if responseMap["result"] != "Sunny, 72°F" {
+		t.Fatalf("expected tool result preserved, got %#v", responseMap["result"])
 	}
 }
 
@@ -148,11 +152,15 @@ func TestResponsesToGeminiRequest_PreservesStructuredFunctionOutput(t *testing.T
 	if functionResponse.Name != "weather_call" {
 		t.Fatalf("expected function response name weather_call, got %q", functionResponse.Name)
 	}
-	if functionResponse.Response["temperature"] != 72 {
-		t.Fatalf("expected temperature 72, got %#v", functionResponse.Response["temperature"])
+	responseMap, ok := functionResponse.Response.(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected response to be map[string]interface{}, got %T", functionResponse.Response)
 	}
-	if functionResponse.Response["condition"] != "sunny" {
-		t.Fatalf("expected condition sunny, got %#v", functionResponse.Response["condition"])
+	if responseMap["temperature"] != 72 {
+		t.Fatalf("expected temperature 72, got %#v", responseMap["temperature"])
+	}
+	if responseMap["condition"] != "sunny" {
+		t.Fatalf("expected condition sunny, got %#v", responseMap["condition"])
 	}
 }
 
@@ -433,11 +441,15 @@ func TestResponsesResponseToGemini_PreservesStructuredFunctionOutput(t *testing.
 	if functionResponse.Name != "weather_call" {
 		t.Fatalf("expected function response name weather_call, got %q", functionResponse.Name)
 	}
-	if functionResponse.Response["temperature"] != 72 {
-		t.Fatalf("expected temperature 72, got %#v", functionResponse.Response["temperature"])
+	responseMap, ok := functionResponse.Response.(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected response to be map[string]interface{}, got %T", functionResponse.Response)
 	}
-	if functionResponse.Response["condition"] != "sunny" {
-		t.Fatalf("expected condition sunny, got %#v", functionResponse.Response["condition"])
+	if responseMap["temperature"] != 72 {
+		t.Fatalf("expected temperature 72, got %#v", responseMap["temperature"])
+	}
+	if responseMap["condition"] != "sunny" {
+		t.Fatalf("expected condition sunny, got %#v", responseMap["condition"])
 	}
 }
 
@@ -459,7 +471,11 @@ func TestResponsesResponseToGemini_WrapsScalarFunctionOutputConsistently(t *test
 	if functionResponse == nil {
 		t.Fatal("expected function response")
 	}
-	if functionResponse.Response["result"] != true {
+	responseMap, ok := functionResponse.Response.(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected response to be map[string]interface{}, got %T", functionResponse.Response)
+	}
+	if responseMap["result"] != true {
 		t.Fatalf("expected scalar output wrapped under result, got %#v", functionResponse.Response)
 	}
 }
@@ -697,7 +713,11 @@ func TestGeminiResponsesRoundtrip_FunctionResponseObjectShape(t *testing.T) {
 	if functionResponse.Name != "weather_call" {
 		t.Fatalf("expected function response name weather_call, got %q", functionResponse.Name)
 	}
-	if functionResponse.Response["temperature"] != 72 || functionResponse.Response["condition"] != "sunny" {
+	responseMap, ok := functionResponse.Response.(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected response to be map[string]interface{}, got %T", functionResponse.Response)
+	}
+	if responseMap["temperature"] != 72 || responseMap["condition"] != "sunny" {
 		t.Fatalf("unexpected function response payload: %#v", functionResponse.Response)
 	}
 }

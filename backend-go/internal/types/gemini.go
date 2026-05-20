@@ -121,8 +121,8 @@ type GeminiFunctionCall struct {
 
 // GeminiFunctionResponse 函数响应
 type GeminiFunctionResponse struct {
-	Name     string                 `json:"name"`
-	Response map[string]interface{} `json:"response"`
+	Name     string      `json:"name"`
+	Response interface{} `json:"response"`
 }
 
 // GeminiTool 工具定义

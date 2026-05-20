@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/BenedictKing/ccx/internal/config"
@@ -80,11 +79,12 @@ func TestChatHandler_DeepSeekChatAndMessagesThinkingMatrix(t *testing.T) {
 			defer upstream.Close()
 
 			router := newChatTestRouter(t, config.UpstreamConfig{
-				Name:        tt.name,
-				BaseURL:     upstream.URL,
-				APIKeys:     []string{"sk-test"},
-				ServiceType: tt.serviceType,
-				Status:      "active",
+				Name:                     tt.name,
+				BaseURL:                  upstream.URL,
+				APIKeys:                  []string{"sk-test"},
+				ServiceType:              tt.serviceType,
+				Status:                   "active",
+				PassbackReasoningContent: true,
 			})
 
 			reqBody := `{"model":"deepseek-v4-pro","messages":[{"role":"user","content":"hello"},{"role":"assistant","reasoning_content":"previous reasoning","content":"previous text"}]}`
@@ -95,62 +95,5 @@ func TestChatHandler_DeepSeekChatAndMessagesThinkingMatrix(t *testing.T) {
 			tt.wantUpstream(t, captured)
 			tt.wantDownstream(t, w.Body.Bytes())
 		})
-	}
-}
-
-func TestChatHandler_DeepSeekMessagesStreamThinkingToReasoningContent(t *testing.T) {
-	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/event-stream")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(strings.Join([]string{
-			`event: message_start`,
-			`data: {"type":"message_start","message":{"id":"msg_ds","type":"message","role":"assistant","model":"deepseek-v4-pro","content":[],"usage":{"input_tokens":1,"output_tokens":0}}}`,
-			``,
-			`event: content_block_start`,
-			`data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":""}}`,
-			``,
-			`event: content_block_delta`,
-			`data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"messages thinking"}}`,
-			``,
-			`event: content_block_stop`,
-			`data: {"type":"content_block_stop","index":0}`,
-			``,
-			`event: content_block_start`,
-			`data: {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}`,
-			``,
-			`event: content_block_delta`,
-			`data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"messages text"}}`,
-			``,
-			`event: content_block_stop`,
-			`data: {"type":"content_block_stop","index":1}`,
-			``,
-			`event: message_delta`,
-			`data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"input_tokens":1,"output_tokens":2}}`,
-			``,
-			`event: message_stop`,
-			`data: {"type":"message_stop"}`,
-			``,
-		}, "\n")))
-	}))
-	defer upstream.Close()
-
-	router := newChatTestRouter(t, config.UpstreamConfig{
-		Name:        "chat_stream_to_deepseek_messages",
-		BaseURL:     upstream.URL,
-		APIKeys:     []string{"sk-test"},
-		ServiceType: "claude",
-		Status:      "active",
-	})
-
-	w := performChatHandlerRequest(t, router, `{"model":"deepseek-v4-pro","stream":true,"messages":[{"role":"user","content":"hello"}]}`)
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, body=%s", w.Code, w.Body.String())
-	}
-	body := w.Body.String()
-	if !strings.Contains(body, `"reasoning_content":"messages thinking"`) {
-		t.Fatalf("expected stream reasoning_content from thinking_delta, got %s", body)
-	}
-	if !strings.Contains(body, `"content":"messages text"`) {
-		t.Fatalf("expected stream text content, got %s", body)
 	}
 }

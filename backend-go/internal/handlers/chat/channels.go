@@ -28,6 +28,7 @@ func GetUpstreams(cfgManager *config.ConfigManager) gin.HandlerFunc {
 		upstreams := make([]gin.H, len(cfg.ChatUpstream))
 		for i, up := range cfg.ChatUpstream {
 			upstreams[i] = common.BuildChannelView(up, i)
+			upstreams[i]["passbackReasoningContent"] = up.PassbackReasoningContent
 		}
 
 		c.JSON(200, gin.H{

@@ -190,10 +190,27 @@ func (p *GeminiProvider) convertMessage(msg types.ClaudeMessage) map[string]inte
 			resultContent := content["content"]
 
 			var response interface{}
-			if str, ok := resultContent.(string); ok {
-				response = map[string]string{"result": str}
+			if resultContent == nil {
+				response = map[string]interface{}{"result": ""}
+			} else if str, ok := resultContent.(string); ok {
+				response = map[string]interface{}{"result": str}
+			} else if obj, ok := resultContent.(map[string]interface{}); ok {
+				response = obj
+			} else if arr, ok := resultContent.([]interface{}); ok {
+				// 提取 Content Blocks 中的文本
+				var partsText []string
+				for _, item := range arr {
+					if block, ok := item.(map[string]interface{}); ok {
+						if text, ok := block["text"].(string); ok && text != "" {
+							partsText = append(partsText, text)
+						}
+					}
+				}
+				response = map[string]interface{}{"result": strings.Join(partsText, "\n")}
 			} else {
-				response = resultContent
+				// 其他类型转为字符串包装
+				bytes, _ := json.Marshal(resultContent)
+				response = map[string]interface{}{"result": string(bytes)}
 			}
 
 			parts = append(parts, map[string]interface{}{

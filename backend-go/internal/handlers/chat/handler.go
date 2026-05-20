@@ -79,6 +79,14 @@ func Handler(
 		// 提取统一会话标识用于 Trace 亲和性
 		userID := utils.ExtractUnifiedSessionID(c, bodyBytes)
 
+		// 预处理：清理空 signature 字段，预防上游参数校验 400
+		bodyBytes, modified := common.RemoveEmptySignatures(bodyBytes, envCfg.EnableRequestLogs, "Chat")
+		_ = modified
+
+		// 预处理：清理历史 thinking 内容块/字段，预防上游参数校验 400
+		bodyBytes, thinkingModified := common.SanitizeMalformedThinkingBlocks(bodyBytes, envCfg.EnableRequestLogs, "Chat")
+		_ = thinkingModified
+
 		// 记录原始请求信息
 		common.LogOriginalRequest(c, bodyBytes, envCfg, "Chat")
 
@@ -292,6 +300,62 @@ func buildChatCompletionRequestBody(
 }
 
 // buildProviderRequest 构建上游请求
+
+func stripThinkingBlocksFromBody(bodyBytes []byte) []byte {
+	decoder := json.NewDecoder(bytes.NewReader(bodyBytes))
+	decoder.UseNumber()
+
+	var data map[string]interface{}
+	if err := decoder.Decode(&data); err != nil {
+		return bodyBytes
+	}
+
+	messages, ok := data["messages"].([]interface{})
+	if !ok {
+		return bodyBytes
+	}
+
+	modified := false
+	for _, msg := range messages {
+		msgMap, ok := msg.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		content, ok := msgMap["content"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		filtered := make([]interface{}, 0, len(content))
+		for _, block := range content {
+			blockMap, ok := block.(map[string]interface{})
+			if !ok {
+				filtered = append(filtered, block)
+				continue
+			}
+			blockType, _ := blockMap["type"].(string)
+			if blockType == "thinking" || blockType == "redacted_thinking" {
+				modified = true
+				continue
+			}
+			filtered = append(filtered, block)
+		}
+
+		msgMap["content"] = filtered
+	}
+
+	if !modified {
+		return bodyBytes
+	}
+
+	newBytes, err := json.Marshal(data)
+	if err != nil {
+		return bodyBytes
+	}
+	return newBytes
+}
+
 func buildProviderRequest(
 	c *gin.Context,
 	upstream *config.UpstreamConfig,
@@ -336,6 +400,9 @@ func buildProviderRequest(
 		requestBody, err = json.Marshal(claudeReq)
 		if err != nil {
 			return nil, err
+		}
+		if !upstream.PassbackReasoningContent {
+			requestBody = stripThinkingBlocksFromBody(requestBody)
 		}
 		if skipVersionPrefix {
 			url = fmt.Sprintf("%s/messages", strings.TrimRight(baseURL, "/"))
