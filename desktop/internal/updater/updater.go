@@ -156,6 +156,9 @@ func (u *Updater) Check(ctx context.Context) (*Release, error) {
 	}
 
 	assetName := PlatformAssetName(latest)
+	if runtime.GOOS == "linux" && runtime.GOARCH != "amd64" {
+		return nil, fmt.Errorf("Linux %s 暂不支持桌面端自动更新，请手动下载对应安装包", runtime.GOARCH)
+	}
 	var downloadURL, sha256URL string
 	var size int64
 	for _, a := range ghRelease.Assets {
@@ -288,7 +291,7 @@ func (u *Updater) Download(ctx context.Context, r *Release) (string, error) {
 func (u *Updater) Verify(ctx context.Context, localPath, sha256URL string) error {
 	u.emit(Progress{Phase: PhaseVerifying})
 	if sha256URL == "" {
-		return nil
+		return errors.New("缺少 sha256 校验文件")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sha256URL, nil)

@@ -81,10 +81,13 @@ jobs:
         run: |
           BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')
           VERSION="${BUILD_VERSION#v}"
+          rm -f bin/*installer*.exe bin/*setup*.exe
           wails3 task windows:package ARCH=amd64 BUILD_VERSION="${VERSION}" BUILD_TIME="${BUILD_TIME}" GIT_COMMIT="${GIT_COMMIT}"
-          INSTALLER=$(ls bin/*-installer*.exe 2>/dev/null | head -1)
+          INSTALLER=$(find bin -maxdepth 1 -type f \( -iname '*amd64*installer*.exe' -o -iname '*installer*.exe' -o -iname '*setup*.exe' \) | head -1)
           if [ -z "$INSTALLER" ]; then
-            INSTALLER=$(ls bin/*.exe | grep -v "CCX Desktop.exe" | head -1)
+            echo "Desktop installer not found"
+            find bin -maxdepth 1 -type f -name '*.exe' -print
+            exit 1
           fi
           mv "$INSTALLER" "bin/CCX-Desktop-${VERSION}-windows-amd64-setup.exe"
           sha256sum "bin/CCX-Desktop-${VERSION}-windows-amd64-setup.exe" | awk '{print $1}' > "bin/CCX-Desktop-${VERSION}-windows-amd64-setup.exe.sha256"
@@ -97,10 +100,13 @@ jobs:
         run: |
           BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')
           VERSION="${BUILD_VERSION#v}"
+          rm -f bin/*installer*.exe bin/*setup*.exe
           wails3 task windows:package ARCH=arm64 BUILD_VERSION="${VERSION}" BUILD_TIME="${BUILD_TIME}" GIT_COMMIT="${GIT_COMMIT}"
-          INSTALLER=$(ls bin/*-installer*.exe 2>/dev/null | head -1)
+          INSTALLER=$(find bin -maxdepth 1 -type f \( -iname '*arm64*installer*.exe' -o -iname '*installer*.exe' -o -iname '*setup*.exe' \) | head -1)
           if [ -z "$INSTALLER" ]; then
-            INSTALLER=$(ls bin/*.exe | grep -v "CCX Desktop.exe" | grep -v "windows-amd64" | head -1)
+            echo "Desktop installer not found"
+            find bin -maxdepth 1 -type f -name '*.exe' -print
+            exit 1
           fi
           mv "$INSTALLER" "bin/CCX-Desktop-${VERSION}-windows-arm64-setup.exe"
           sha256sum "bin/CCX-Desktop-${VERSION}-windows-arm64-setup.exe" | awk '{print $1}' > "bin/CCX-Desktop-${VERSION}-windows-arm64-setup.exe.sha256"

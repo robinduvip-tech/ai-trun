@@ -40,3 +40,10 @@ func TestPlatformAssetName(t *testing.T) {
 		t.Error("PlatformAssetName 返回空")
 	}
 }
+
+func TestVerifyRequiresSha256URL(t *testing.T) {
+	u := New("1.0.0")
+	if err := u.Verify(t.Context(), "unused", ""); err == nil {
+		t.Error("expected error when sha256 URL is empty")
+	}
+}
