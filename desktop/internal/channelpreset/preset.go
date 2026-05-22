@@ -95,7 +95,7 @@ func Presets() []ProviderPreset {
 		{
 			ID:                  ProviderDeepSeek,
 			Label:               "DeepSeek",
-			Description:         "Messages 原生透传、Chat 渠道透传、Codex Responses 三种用法。",
+			Description:         "Messages 原生透传、Codex Responses、Chat 渠道透传三种用法。",
 			DirectAgent:         true,
 			NativeMessages:      true,
 			ChatCompatible:      true,
@@ -114,7 +114,7 @@ func Presets() []ProviderPreset {
 		{
 			ID:                  ProviderMiMo,
 			Label:               "MiMo",
-			Description:         "Messages 原生透传、Chat 渠道透传、Codex Responses；内置按量与 token plan 入口。",
+			Description:         "Messages 原生透传、Codex Responses、Chat 渠道透传；内置按量与 token plan 入口。",
 			DirectAgent:         true,
 			NativeMessages:      true,
 			ChatCompatible:      true,
@@ -136,7 +136,7 @@ func Presets() []ProviderPreset {
 		{
 			ID:                  ProviderKimi,
 			Label:               "Kimi / Moonshot",
-			Description:         "Chat 渠道透传与 Codex Responses，适合加入 CCX 调度池。",
+			Description:         "Codex Responses 与 Chat 渠道透传，适合加入 CCX 调度池。",
 			ChatCompatible:      true,
 			ResponsesCompatible: true,
 			Plans: []ProviderPlan{{
@@ -155,7 +155,7 @@ func Presets() []ProviderPreset {
 		{
 			ID:                  ProviderGLM,
 			Label:               "GLM / BigModel",
-			Description:         "Chat 渠道透传与 Codex Responses，适合加入 CCX 调度池。",
+			Description:         "Codex Responses 与 Chat 渠道透传，适合加入 CCX 调度池。",
 			ChatCompatible:      true,
 			ResponsesCompatible: true,
 			Plans: []ProviderPlan{{
@@ -174,7 +174,7 @@ func Presets() []ProviderPreset {
 		{
 			ID:                  ProviderMiniMax,
 			Label:               "MiniMax",
-			Description:         "Chat 渠道透传与 Codex Responses，适合加入 CCX 调度池。",
+			Description:         "Codex Responses 与 Chat 渠道透传，适合加入 CCX 调度池。",
 			ChatCompatible:      true,
 			ResponsesCompatible: true,
 			Plans: []ProviderPlan{{
