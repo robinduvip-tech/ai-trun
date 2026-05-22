@@ -2,6 +2,7 @@
 import MetricsGrid from '@/components/status/MetricsGrid.vue'
 import ServiceActions from '@/components/status/ServiceActions.vue'
 import ServiceDetails from '@/components/status/ServiceDetails.vue'
+import DiagnosticCard from '@/components/status/DiagnosticCard.vue'
 import LogViewer from '@/components/status/LogViewer.vue'
 import { useStatus } from '@/composables/useStatus'
 
@@ -25,8 +26,15 @@ const emit = defineEmits<{
       @open-browser="openInBrowser"
       @refresh="refresh"
     />
-    <p v-if="actionError" class="text-sm text-destructive-foreground">{{ actionError }}</p>
-    <p v-else-if="status.lastError" class="text-sm text-destructive-foreground">{{ status.lastError }}</p>
+    <DiagnosticCard
+      v-if="actionError"
+      :error="actionError"
+      @dismiss="actionError = ''"
+    />
+    <DiagnosticCard
+      v-else-if="status.lastError"
+      :error="status.lastError"
+    />
     <ServiceDetails :status="status" />
     <LogViewer :logs="status.logs" />
   </div>

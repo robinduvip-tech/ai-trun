@@ -77,7 +77,7 @@ const tabTitles: Record<TabValue, string> = {
       <!-- 独立内容滚动区域 -->
       <div class="flex-1 overflow-y-auto px-8 py-7">
         <div class="max-w-5xl mx-auto h-full">
-          <!-- 保持选项卡的过渡结构，不使用 TabSwitcher 从而完全摆脱药丸 Tabs，改用 v-show 优化性能和保持状态 -->
+          <!-- v-show 常驻缓存各 Tab，切换时保留内部状态与滚动位置 -->
           <div v-show="activeTab === 'status'" class="h-full">
             <StatusTab @switch-to-web="switchToWeb" />
           </div>

@@ -343,18 +343,27 @@ func (m *Manager) EnsureProxyAccessKey() (string, error) {
 
 func (m *Manager) WaitHealthy(ctx context.Context, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
+	var lastErr error
 	for time.Now().Before(deadline) {
 		m.mu.Lock()
 		port := m.port
 		m.mu.Unlock()
 		if _, err := m.fetchHealth(ctx, port); err == nil {
 			return nil
+		} else {
+			lastErr = err
 		}
 		select {
 		case <-ctx.Done():
+			if lastErr != nil {
+				return fmt.Errorf("等待 CCX /health 超时: %w", lastErr)
+			}
 			return ctx.Err()
 		case <-time.After(300 * time.Millisecond):
 		}
+	}
+	if lastErr != nil {
+		return fmt.Errorf("等待 CCX /health 超时: %w", lastErr)
 	}
 	return fmt.Errorf("等待 CCX /health 超时")
 }

@@ -8,7 +8,7 @@ info:
   description: "Desktop shell for the CCX core gateway service."
   copyright: "(c) 2026, CCX"
   comments: "CCX desktop service supervisor"
-  version: "0.0.1"
+  version: "1.0.0"
 
 dev_mode:
   root_path: .
