@@ -10,6 +10,7 @@
 
 ### 修复
 
+- **渠道对话框下拉菜单位置偏移**：修复 Vuetify v-select/v-combobox 在添加/编辑渠道对话框内首次打开时菜单位置计算错误的问题，通过 eager 预渲染与 resize 触发确保下拉菜单正确定位。
 - **DeepSeek `user_id` 限速与隔离字段透传**：
   - 让内部会话标识提取支持 Chat 请求体顶层 `user_id`，用于 Trace 亲和性与调度追踪。
   - 补齐 Chat → Claude、Messages → OpenAI/Responses、Responses → Claude 跨协议转换中的 `user_id` / `metadata.user_id` 映射，避免用户隔离标识在协议转换时丢失。
