@@ -117,7 +117,7 @@ const clearLocalLogs = () => {
 </script>
 
 <template>
-  <div class="logviewer-container bg-slate-950 border-2 border-slate-700 rounded-xl overflow-hidden flex flex-col h-[380px] shadow-[0_15px_50px_rgba(0,0,0,0.5)] select-text">
+  <div class="logviewer-container bg-slate-950 border border-slate-900 rounded-xl overflow-hidden flex flex-col h-[380px] shadow-[0_15px_50px_rgba(0,0,0,0.5)] select-text">
     <!-- 终端顶部控制栏 -->
     <div class="h-11 bg-slate-900/60 border-b border-slate-900 px-4 flex items-center justify-between select-none shrink-0">
       <div class="flex items-center gap-2">
@@ -229,12 +229,12 @@ const clearLocalLogs = () => {
 
 <!-- 亮色模式终端适配 -->
 <style>
-.light .logviewer-container { background: #ffffff; border-color: #cbd5e1 !important; box-shadow: 0 2px 20px rgba(0,0,0,0.06); }
+.light .logviewer-container { background: #ffffff; border-color: #d1d5db !important; box-shadow: 0 2px 20px rgba(0,0,0,0.06); }
 .light .logviewer-body { background: #ffffff; }
 .light .bg-slate-900\/60 { background: #f5f5f5 !important; }
 .light .bg-slate-950\/80 { background: #ffffff !important; }
 .light .bg-slate-800 { background: #f1f5f9 !important; }
-.light .border-slate-900 { border-color: #cbd5e1 !important; }
+.light .border-slate-900 { border-color: #d1d5db !important; }
 .light .text-slate-300 { color: #334155 !important; }
 .light .text-slate-400 { color: #64748b !important; }
 .light .text-slate-500 { color: #94a3b8 !important; }

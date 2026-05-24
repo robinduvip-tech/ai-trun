@@ -123,7 +123,7 @@ const submit = async () => {
 
 <template>
   <div class="space-y-5">
-    <div class="bg-glass border border-white/[0.03] rounded-2xl p-5">
+    <div class="channel-preset-intro bg-glass border border-white/[0.03] rounded-2xl p-5">
       <div class="flex items-start justify-between gap-4">
         <div>
           <div class="flex items-center gap-2 text-blue-400 mb-2">
@@ -148,10 +148,10 @@ const submit = async () => {
           v-for="preset in presets"
           :key="preset.id"
           :class="[
-            'w-full p-4 rounded-xl border text-left transition-all duration-200 bg-glass-hover',
+            'w-full p-4 rounded-xl border text-left transition-all duration-200 bg-glass-hover preset-btn',
             selectedProvider === preset.id
-              ? 'border-blue-500/30 bg-blue-500/10 shadow-[0_0_18px_rgba(59,130,246,0.12)]'
-              : 'border-white/[0.03] bg-white/[0.01] hover:border-border'
+              ? 'preset-active border-blue-500/50 bg-blue-500/15 shadow-[0_0_18px_rgba(59,130,246,0.15)]'
+              : 'preset-inactive border-white/[0.03] bg-white/[0.01] hover:border-border'
           ]"
           @click="selectedProvider = preset.id"
         >
@@ -165,7 +165,7 @@ const submit = async () => {
         </button>
       </div>
 
-      <div v-if="currentPreset" class="bg-glass border border-white/[0.03] rounded-2xl p-5 space-y-5">
+      <div v-if="currentPreset" class="preset-form bg-glass border border-white/[0.03] rounded-2xl p-5 space-y-5">
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 class="text-lg font-semibold text-foreground">{{ currentPreset.label }}</h3>
@@ -260,3 +260,14 @@ const submit = async () => {
     </div>
   </div>
 </template>
+
+<!-- 亮色模式：渠道卡片边框可见 -->
+<style>
+.light .channel-preset-intro { border-color: #cbd5e1 !important; }
+.light .preset-btn { border-color: #cbd5e1 !important; background: rgba(255,255,255,0.7) !important; }
+.light .preset-btn:hover { border-color: #94a3b8 !important; }
+.light .preset-inactive { border-color: #d1d5db !important; background: rgba(241,245,249,0.7) !important; opacity: 0.65; }
+.light .preset-inactive:hover { opacity: 0.85; border-color: #94a3b8 !important; }
+.light .preset-active { border-color: #6366f1 !important; background: rgba(99,102,241,0.08) !important; opacity: 1; }
+.light .preset-form { border-color: #cbd5e1 !important; }
+</style>
