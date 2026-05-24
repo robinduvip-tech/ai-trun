@@ -183,6 +183,9 @@ type Config struct {
 
 	// 移除计费头中的 cch= 参数：启用时自动从 system 数组中移除 cch=xxx; 部分
 	StripBillingHeader bool `json:"stripBillingHeader"`
+
+	// 主题偏好：用户选择的界面主题 "light" / "dark" / "auto"
+	ThemePreference string `json:"themePreference,omitempty"`
 }
 
 // FailedKey 失败密钥记录
@@ -488,6 +491,30 @@ func (cm *ConfigManager) SetStripBillingHeader(enabled bool) error {
 		status = "启用"
 	}
 	log.Printf("[Config-StripBillingHeader] 移除计费头已%s", status)
+	return nil
+}
+
+// ============== ThemePreference 相关方法 ==============
+
+// GetThemePreference 获取主题偏好
+func (cm *ConfigManager) GetThemePreference() string {
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
+	if cm.config.ThemePreference == "" {
+		return "auto"
+	}
+	return cm.config.ThemePreference
+}
+
+// SetThemePreference 设置主题偏好
+func (cm *ConfigManager) SetThemePreference(theme string) error {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+	cm.config.ThemePreference = theme
+	if err := cm.saveConfigLocked(cm.config); err != nil {
+		return err
+	}
+	log.Printf("[Config-Theme] 主题偏好已设置为: %s", theme)
 	return nil
 }
 

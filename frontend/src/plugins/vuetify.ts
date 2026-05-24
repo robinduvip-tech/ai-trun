@@ -426,28 +426,31 @@ const customSvgIconSet: IconSet = {
   }
 }
 
-// 🎨 精心设计的现代化配色方案
+// 🎨 Precision Glass 配色方案
 // Light Theme - 清新专业，柔和渐变
 const lightTheme: ThemeDefinition = {
   dark: false,
   colors: {
-    // 主色调 - 现代蓝紫渐变感
-    primary: '#6366F1', // Indigo - 沉稳专业
-    secondary: '#8B5CF6', // Violet - 辅助强调
-    accent: '#EC4899', // Pink - 活力点缀
+    // 主色调
+    primary: '#6366F1', // Indigo-500
+    secondary: '#8B5CF6', // Violet-500
+    accent: '#EC4899', // Pink-500
 
-    // 语义色彩 - 清晰易辨
-    info: '#3B82F6', // Blue
-    success: '#10B981', // Emerald
-    warning: '#F59E0B', // Amber
-    error: '#EF4444', // Red
+    // 语义色彩
+    info: '#3B82F6', // Blue-500
+    success: '#10B981', // Emerald-500
+    warning: '#F59E0B', // Amber-500
+    error: '#EF4444', // Red-500
 
     // 表面色 - 柔和分层
     background: '#F8FAFC', // Slate-50
-    surface: '#FFFFFF', // Pure white cards
-    'surface-variant': '#F1F5F9', // Slate-100 for secondary surfaces
-    'on-surface': '#1E293B', // Slate-800
-    'on-background': '#334155' // Slate-700
+    surface: '#FFFFFF',
+    'surface-variant': '#F1F5F9', // Slate-100
+    'on-surface': '#0F172A', // Slate-900
+    'on-surface-variant': '#475569', // Slate-600
+    'on-background': '#1E293B', // Slate-800
+    outline: '#CBD5E1', // Slate-300
+    'outline-variant': '#E2E8F0' // Slate-200
   }
 }
 
@@ -455,7 +458,7 @@ const lightTheme: ThemeDefinition = {
 const darkTheme: ThemeDefinition = {
   dark: true,
   colors: {
-    // 主色调 - 亮度适中，不刺眼
+    // 主色调 - 亮度适中
     primary: '#818CF8', // Indigo-400
     secondary: '#A78BFA', // Violet-400
     accent: '#F472B6', // Pink-400
@@ -467,11 +470,14 @@ const darkTheme: ThemeDefinition = {
     error: '#F87171', // Red-400
 
     // 表面色 - 深色层次分明
-    background: '#0F172A', // Slate-900
-    surface: '#1E293B', // Slate-800
-    'surface-variant': '#334155', // Slate-700
+    background: '#0B0F1A',
+    surface: '#1A1F2E',
+    'surface-variant': '#1E293B', // Slate-800
     'on-surface': '#F1F5F9', // Slate-100
-    'on-background': '#E2E8F0' // Slate-200
+    'on-surface-variant': '#CBD5E1', // Slate-300
+    'on-background': '#E2E8F0', // Slate-200
+    outline: 'rgba(148, 163, 184, 0.20)',
+    'outline-variant': 'rgba(148, 163, 184, 0.10)'
   }
 }
 

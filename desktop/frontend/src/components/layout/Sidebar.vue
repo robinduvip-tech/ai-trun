@@ -17,6 +17,7 @@ import {
 import type { TabValue } from '@/types'
 
 const modelValue = defineModel<TabValue>({ required: true })
+const props = defineProps<{ theme: 'dark' | 'light' }>()
 
 const { status, loading, autostartEnabled, startService, stopService, setAutostart } = useStatus()
 const { state: updaterState, check: checkUpdate } = useUpdater()
@@ -52,14 +53,12 @@ const handleDaemonAction = async () => {
 </script>
 
 <template>
-  <aside class="w-68 flex flex-col h-full bg-slate-950/40 border-r border-slate-900 backdrop-blur-3xl shrink-0 select-none">
+  <aside class="w-68 flex flex-col h-full bg-card/40 border-r border-border backdrop-blur-3xl shrink-0 select-none">
     <!-- macOS 交通灯避让区 & 标题栏拖拽区域 -->
     <div class="h-14 w-full flex items-center justify-end px-5 shrink-0" data-wails-drag>
-      <!-- 将标题完美靠右边对齐，为左侧 macOS 交通灯腾出完全开阔、无阻挡的绝佳操作空间 -->
       <div class="flex items-center gap-2.5 mt-2.5">
-        <!-- 引入全新设计的高能自旋转 AI 路由发光核心 Logo，上调尺寸到 32px 凸显精美细节 -->
         <Logo :size="32" />
-        <span class="text-sm font-bold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-slate-100 to-slate-400">
+        <span class="text-sm font-bold tracking-wider text-foreground/80">
           CCX CONTROL
         </span>
       </div>
@@ -75,7 +74,7 @@ const handleDaemonAction = async () => {
           'w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-left transition-all duration-300 relative group overflow-hidden',
           modelValue === item.id
             ? 'bg-blue-600/10 text-blue-400 border border-blue-500/15'
-            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40 border border-transparent'
+            : 'text-muted-foreground hover:text-foreground hover:bg-background/60 border border-transparent'
         ]"
       >
         <!-- 侧栏滑块小霓虹指示器 -->
@@ -88,12 +87,12 @@ const handleDaemonAction = async () => {
           :is="item.icon"
           :class="[
             'w-4.5 h-4.5 shrink-0 transition-transform duration-300 group-hover:scale-110',
-            modelValue === item.id ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'
+            modelValue === item.id ? 'text-blue-400' : 'text-muted-foreground/60 group-hover:text-muted-foreground'
           ]"
         />
         <div class="flex flex-col min-w-0">
           <span class="text-sm font-medium leading-tight">{{ item.label }}</span>
-          <span class="text-[10px] text-slate-500 mt-0.5 truncate group-hover:text-slate-400 transition-colors">
+          <span class="text-[10px] text-muted-foreground/60 mt-0.5 truncate group-hover:text-muted-foreground transition-colors">
             {{ item.desc }}
           </span>
         </div>
@@ -101,13 +100,13 @@ const handleDaemonAction = async () => {
     </nav>
 
     <!-- 底部常驻迷你服务守护面板 -->
-    <div class="p-4 border-t border-slate-900/60 bg-slate-950/20 shrink-0">
-      <div class="p-3.5 rounded-xl border border-white/[0.03] bg-white/[0.01] hover:bg-white/[0.02] transition-colors">
+    <div class="p-4 border-t border-border bg-background/30 shrink-0">
+      <div class="p-3.5 rounded-xl border border-border bg-background/40 hover:bg-background/60 transition-colors">
         <div class="flex items-center justify-between mb-3.5">
           <div class="flex items-center gap-2 min-w-0">
             <!-- 霓虹呼吸指示灯 -->
             <div :class="['w-2 h-2 rounded-full transition-all duration-500 shrink-0', statusGlowClass]" />
-            <span class="text-xs font-semibold text-slate-300 truncate">{{ statusLabel }}</span>
+            <span class="text-xs font-semibold text-foreground/80 truncate">{{ statusLabel }}</span>
           </div>
           <!-- 迷你开关控制，可快速启停 -->
           <button
@@ -125,16 +124,16 @@ const handleDaemonAction = async () => {
         </div>
 
         <!-- 详细物理信息 -->
-        <div class="space-y-1.5 text-[10px] font-mono text-slate-500">
+        <div class="space-y-1.5 text-[10px] font-mono text-muted-foreground">
           <div class="flex justify-between items-center">
             <span>网关端口</span>
-            <span class="text-slate-300 bg-slate-900/80 px-1.5 py-0.5 rounded border border-white/[0.02]">
+            <span class="text-foreground/70 bg-background px-1.5 py-0.5 rounded border border-border">
               {{ status.port || '——' }}
             </span>
           </div>
           <div class="flex justify-between items-center" v-if="status.pid">
             <span>守护 PID</span>
-            <span class="text-slate-300 bg-slate-900/80 px-1.5 py-0.5 rounded border border-white/[0.02]">
+            <span class="text-foreground/70 bg-background px-1.5 py-0.5 rounded border border-border">
               {{ status.pid }}
             </span>
           </div>
@@ -146,7 +145,7 @@ const handleDaemonAction = async () => {
                 'flex items-center gap-1 px-1.5 py-0.5 rounded border transition-all duration-200 cursor-pointer',
                 autostartEnabled
                   ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                  : 'bg-slate-900/80 text-slate-500 border-white/[0.02] hover:text-slate-400'
+                  : 'bg-background text-muted-foreground border-border hover:text-foreground'
               ]"
             >
               <Power class="w-2.5 h-2.5" />
@@ -160,7 +159,7 @@ const handleDaemonAction = async () => {
               :disabled="updaterState.checking"
               :class="[
                 'flex items-center gap-1 px-1.5 py-0.5 rounded border transition-all duration-200 cursor-pointer',
-                'bg-slate-900/80 text-slate-300 border-white/[0.02] hover:text-blue-400 hover:border-blue-500/20',
+                'bg-background text-foreground/70 border-border hover:text-blue-400 hover:border-blue-500/20',
                 updaterState.checking && 'opacity-60 cursor-wait'
               ]"
               :title="updaterState.checking ? '检查中…' : '点击检查更新'"

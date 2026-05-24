@@ -1051,6 +1051,19 @@ export class ApiService {
     })
   }
 
+  // 获取主题偏好
+  async getThemePreference(): Promise<{ themePreference: string }> {
+    return this.request('/settings/theme')
+  }
+
+  // 设置主题偏好
+  async setThemePreference(theme: 'light' | 'dark' | 'auto'): Promise<void> {
+    await this.request('/settings/theme', {
+      method: 'PUT',
+      body: JSON.stringify({ theme })
+    })
+  }
+
   // ============== 历史指标 API ==============
 
   // 获取 Messages 渠道历史指标（用于时间序列图表）

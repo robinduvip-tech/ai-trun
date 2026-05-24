@@ -39,7 +39,7 @@ const emit = defineEmits<{
         variant="secondary"
         :disabled="loading || !status.running || status.attached"
         @click="emit('stop')"
-        class="bg-slate-900/80 hover:bg-slate-900 text-slate-300 border border-white/[0.03] active:scale-95 hover:scale-[1.02] transition-all duration-300 disabled:opacity-20 cursor-pointer"
+        class="bg-background/80 hover:bg-background text-foreground/80 border border-white/[0.03] active:scale-95 hover:scale-[1.02] transition-all duration-300 disabled:opacity-20 cursor-pointer"
       >
         <Square class="w-3.5 h-3.5 mr-1.5 fill-slate-300" />
         停止服务
@@ -51,7 +51,7 @@ const emit = defineEmits<{
         variant="secondary"
         :disabled="loading || status.attached"
         @click="emit('restart')"
-        class="bg-slate-900/80 hover:bg-slate-900 text-slate-300 border border-white/[0.03] active:scale-95 hover:scale-[1.02] transition-all duration-300 disabled:opacity-20 cursor-pointer"
+        class="bg-background/80 hover:bg-background text-foreground/80 border border-white/[0.03] active:scale-95 hover:scale-[1.02] transition-all duration-300 disabled:opacity-20 cursor-pointer"
       >
         <RotateCcw class="w-3.5 h-3.5 mr-1.5" />
         重启服务
@@ -66,7 +66,7 @@ const emit = defineEmits<{
         variant="outline"
         :disabled="loading"
         @click="emit('openWebUI')"
-        class="bg-slate-950/40 border border-slate-900/80 hover:bg-slate-900 hover:text-slate-200 hover:border-slate-800 text-slate-400 active:scale-95 transition-all duration-200 cursor-pointer"
+        class="bg-background/40 border border-border/80 hover:bg-background hover:text-foreground hover:border-border text-muted-foreground active:scale-95 transition-all duration-200 cursor-pointer"
       >
         <Globe class="w-3.5 h-3.5 mr-1.5 text-blue-500/80" />
         进入 Web UI
@@ -78,7 +78,7 @@ const emit = defineEmits<{
         variant="outline"
         :disabled="loading"
         @click="emit('openBrowser')"
-        class="bg-slate-950/40 border border-slate-900/80 hover:bg-slate-900 hover:text-slate-200 hover:border-slate-800 text-slate-400 active:scale-95 transition-all duration-200 cursor-pointer"
+        class="bg-background/40 border border-border/80 hover:bg-background hover:text-foreground hover:border-border text-muted-foreground active:scale-95 transition-all duration-200 cursor-pointer"
       >
         <ExternalLink class="w-3.5 h-3.5 mr-1.5 text-emerald-500/80" />
         浏览器直达
@@ -90,7 +90,7 @@ const emit = defineEmits<{
         variant="ghost"
         :disabled="loading"
         @click="emit('refresh')"
-        class="text-slate-500 hover:text-slate-300 hover:bg-slate-900 p-2 rounded-lg cursor-pointer transition-colors"
+        class="text-muted-foreground hover:text-foreground/80 hover:bg-background p-2 rounded-lg cursor-pointer transition-colors"
         title="刷新当前状态"
       >
         <RefreshCw class="w-3.5 h-3.5" :class="loading ? 'animate-spin' : ''" />

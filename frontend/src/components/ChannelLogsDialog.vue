@@ -269,6 +269,7 @@ onUnmounted(() => stopPolling())
 .log-item {
   padding-top: 10px;
   padding-bottom: 10px;
+  border-radius: 8px;
 }
 
 .log-status-chip {

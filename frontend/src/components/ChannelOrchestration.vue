@@ -1516,8 +1516,8 @@ defineExpose({
 
 <style scoped>
 /* =====================================================
-   Channel orchestration - retro pixel theme styles
-   Neo-Brutalism: sharp corners, bold black borders, hard shadows
+   Channel orchestration - Precision Glass theme styles
+   Soft rounded corners, subtle shadows, modern feel
    ===================================================== */
 
 .channel-orchestration {
@@ -1548,10 +1548,11 @@ defineExpose({
   padding: 10px 12px;
   margin: 2px;
   background: rgb(var(--v-theme-surface));
-  border: 2px solid rgb(var(--v-theme-on-surface));
-  box-shadow: 4px 4px 0 0 rgb(var(--v-theme-on-surface));
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
   min-height: 52px;
-  transition: all 0.1s ease;
+  transition: all 0.2s ease;
   cursor: pointer;
   overflow: hidden;
 }
@@ -1597,26 +1598,27 @@ defineExpose({
 }
 
 .channel-row:hover {
-  background: rgba(var(--v-theme-primary), 0.08);
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 0 rgb(var(--v-theme-on-surface));
-  border: 2px solid rgb(var(--v-theme-on-surface));
+  background: rgba(var(--v-theme-primary), 0.04);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  border-color: rgba(var(--v-theme-primary), 0.1);
 }
 
 .channel-row:active {
-  transform: translate(2px, 2px);
-  box-shadow: none;
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .v-theme--dark .channel-row {
-  background: rgb(var(--v-theme-surface));
-  border-color: rgba(255, 255, 255, 0.7);
-  box-shadow: 4px 4px 0 0 rgba(255, 255, 255, 0.7);
+  background: rgba(26, 31, 46, 0.55);
+  backdrop-filter: blur(8px);
+  border-color: rgba(148, 163, 184, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 .v-theme--dark .channel-row:hover {
-  background: rgba(var(--v-theme-primary), 0.12);
-  box-shadow: 6px 6px 0 0 rgba(255, 255, 255, 0.7);
-  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(26, 31, 46, 0.7);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+  border-color: rgba(99, 102, 241, 0.1);
 }
 
 /* Visual distinction for unavailable channels */
@@ -1676,9 +1678,8 @@ defineExpose({
   background: rgb(var(--v-theme-primary));
   color: white;
   font-size: 12px;
-  font-weight: 700;
-  border: 2px solid rgb(var(--v-theme-on-surface));
-  text-transform: uppercase;
+  font-weight: 600;
+  border-radius: 6px;
 }
 
 .status-badge-wrapper {
@@ -1688,7 +1689,7 @@ defineExpose({
 }
 
 .v-theme--dark .priority-number {
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .channel-name {
@@ -1851,12 +1852,13 @@ defineExpose({
   gap: 10px;
   background: rgb(var(--v-theme-surface));
   padding: 16px;
-  border: 2px dashed rgb(var(--v-theme-on-surface));
+  border: 1px dashed rgba(var(--v-theme-on-surface), 0.12);
+  border-radius: 12px;
 }
 
 .v-theme--dark .inactive-pool {
-  background: rgb(var(--v-theme-surface));
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(26, 31, 46, 0.4);
+  border-color: rgba(148, 163, 184, 0.1);
 }
 
 .inactive-channel-row {
@@ -1866,31 +1868,32 @@ defineExpose({
   gap: 12px;
   padding: 10px 14px;
   background: rgb(var(--v-theme-surface));
-  border: 2px solid rgb(var(--v-theme-on-surface));
-  box-shadow: 3px 3px 0 0 rgb(var(--v-theme-on-surface));
-  transition: all 0.1s ease;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
 }
 
 .inactive-channel-row:hover {
-  background: rgba(var(--v-theme-primary), 0.08);
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 0 rgb(var(--v-theme-on-surface));
+  background: rgba(var(--v-theme-primary), 0.04);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .inactive-channel-row:active {
-  transform: translate(2px, 2px);
-  box-shadow: none;
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .v-theme--dark .inactive-channel-row {
-  background: rgb(var(--v-theme-surface));
-  border-color: rgba(255, 255, 255, 0.6);
-  box-shadow: 3px 3px 0 0 rgba(255, 255, 255, 0.6);
+  background: rgba(26, 31, 46, 0.4);
+  border-color: rgba(148, 163, 184, 0.06);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .v-theme--dark .inactive-channel-row:hover {
-  background: rgba(var(--v-theme-primary), 0.12);
-  box-shadow: 4px 4px 0 0 rgba(255, 255, 255, 0.6);
+  background: rgba(26, 31, 46, 0.6);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .inactive-channel-row .channel-info {
@@ -2000,7 +2003,7 @@ defineExpose({
   }
   .channel-row {
     padding: 10px;
-    box-shadow: 3px 3px 0 0 rgb(var(--v-theme-on-surface));
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   }
 
   .channel-metrics,
@@ -2011,7 +2014,7 @@ defineExpose({
   }
 
   .v-theme--dark .channel-row {
-    box-shadow: 3px 3px 0 0 rgba(255, 255, 255, 0.6);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   }
 
   .priority-number,

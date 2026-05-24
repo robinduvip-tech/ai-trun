@@ -130,8 +130,8 @@ const submit = async () => {
             <Network class="w-4 h-4" />
             <span class="text-xs font-bold uppercase tracking-[0.2em]">Channel Preset Center</span>
           </div>
-          <h3 class="text-xl font-bold text-slate-100">渠道中心</h3>
-          <p class="text-sm text-slate-500 mt-1 max-w-2xl">
+          <h3 class="text-xl font-bold text-foreground">渠道中心</h3>
+          <p class="text-sm text-muted-foreground mt-1 max-w-2xl">
             同一把 DeepSeek、MiMo、Kimi、GLM、MiniMax Key 可同时用于 Agent 直连和 CCX 统一渠道池，复杂开关由预设自动处理。
           </p>
         </div>
@@ -151,25 +151,25 @@ const submit = async () => {
             'w-full p-4 rounded-xl border text-left transition-all duration-200 bg-glass-hover',
             selectedProvider === preset.id
               ? 'border-blue-500/30 bg-blue-500/10 shadow-[0_0_18px_rgba(59,130,246,0.12)]'
-              : 'border-white/[0.03] bg-white/[0.01] hover:border-slate-700'
+              : 'border-white/[0.03] bg-white/[0.01] hover:border-border'
           ]"
           @click="selectedProvider = preset.id"
         >
           <div class="flex items-center justify-between gap-2">
-            <span class="font-semibold text-slate-200">{{ preset.label }}</span>
+            <span class="font-semibold text-foreground">{{ preset.label }}</span>
             <span v-if="keysByProvider[preset.id]" class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
               已有 Key
             </span>
           </div>
-          <p class="text-xs text-slate-500 mt-1 line-clamp-2">{{ preset.description }}</p>
+          <p class="text-xs text-muted-foreground mt-1 line-clamp-2">{{ preset.description }}</p>
         </button>
       </div>
 
       <div v-if="currentPreset" class="bg-glass border border-white/[0.03] rounded-2xl p-5 space-y-5">
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 class="text-lg font-semibold text-slate-100">{{ currentPreset.label }}</h3>
-            <p class="text-sm text-slate-500 mt-1">{{ currentPreset.description }}</p>
+            <h3 class="text-lg font-semibold text-foreground">{{ currentPreset.label }}</h3>
+            <p class="text-sm text-muted-foreground mt-1">{{ currentPreset.description }}</p>
           </div>
           <div class="flex flex-wrap gap-1.5">
             <span
@@ -184,43 +184,43 @@ const submit = async () => {
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div class="space-y-2">
-            <Label class="text-xs text-slate-400">添加目标</Label>
+            <Label class="text-xs text-muted-foreground">添加目标</Label>
             <select
               v-model="selectedTarget"
-              class="w-full h-9 rounded-md border border-slate-800 bg-slate-950/70 px-3 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              class="w-full h-9 rounded-md border border-border bg-background/70 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               <option v-for="target in targetOptions" :key="target.type" :value="target.type">
                 {{ target.label }}{{ target.recommended ? ' · 推荐' : '' }}
               </option>
             </select>
-            <p class="text-xs text-slate-500">
+            <p class="text-xs text-muted-foreground">
               {{ targetOptions.find((item) => item.type === selectedTarget)?.description }}
             </p>
           </div>
 
           <div class="space-y-2">
-            <Label class="text-xs text-slate-400">Token Plan / Base URL</Label>
+            <Label class="text-xs text-muted-foreground">Token Plan / Base URL</Label>
             <select
               v-model="selectedPlan"
-              class="w-full h-9 rounded-md border border-slate-800 bg-slate-950/70 px-3 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              class="w-full h-9 rounded-md border border-border bg-background/70 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               <option v-for="plan in currentPreset.plans" :key="plan.id" :value="plan.id">
                 {{ plan.label }}{{ plan.recommended ? ' · 推荐' : '' }}
               </option>
             </select>
-            <p class="text-xs text-slate-500">{{ currentPlan?.description }}</p>
-            <p v-if="currentPlan?.baseUrl && !currentPlan?.custom" class="text-xs text-slate-400 font-mono">{{ currentPlan.baseUrl }}</p>
+            <p class="text-xs text-muted-foreground">{{ currentPlan?.description }}</p>
+            <p v-if="currentPlan?.baseUrl && !currentPlan?.custom" class="text-xs text-muted-foreground font-mono">{{ currentPlan.baseUrl }}</p>
           </div>
         </div>
 
         <div v-if="currentPlan?.custom" class="space-y-2">
-          <Label class="text-xs text-slate-400">自定义 Base URL</Label>
+          <Label class="text-xs text-muted-foreground">自定义 Base URL</Label>
           <Input v-model="customBaseUrl" type="url" placeholder="https://example.com/v1" />
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div class="space-y-2">
-            <Label class="text-xs text-slate-400">API Key</Label>
+            <Label class="text-xs text-muted-foreground">API Key</Label>
             <Input v-model="apiKey" type="password" autocomplete="off" :placeholder="keyPlaceholder" />
             <div v-if="currentAsset?.apiKey" class="flex items-center gap-1.5 text-xs text-emerald-400">
               <KeyRound class="w-3 h-3" />
@@ -229,18 +229,18 @@ const submit = async () => {
           </div>
 
           <div class="space-y-2">
-            <Label class="text-xs text-slate-400">渠道名称</Label>
+            <Label class="text-xs text-muted-foreground">渠道名称</Label>
             <Input v-model="channelName" placeholder="desktop-provider-type" />
-            <p class="text-xs text-slate-500">建议保持唯一；如重复，CCX 会拒绝创建。</p>
+            <p class="text-xs text-muted-foreground">建议保持唯一；如重复，CCX 会拒绝创建。</p>
           </div>
         </div>
 
-        <div class="rounded-xl bg-slate-950/50 border border-slate-900 p-3 text-xs text-slate-400 space-y-1.5">
-          <div class="flex items-center gap-1.5 text-slate-300">
+        <div class="rounded-xl bg-background/50 border border-border p-3 text-xs text-muted-foreground space-y-1.5">
+          <div class="flex items-center gap-1.5 text-foreground/80">
             <Sparkles class="w-3.5 h-3.5 text-blue-400" />
             <span class="font-semibold">预设将自动写入</span>
           </div>
-          <p>Base URL: <code class="text-slate-200">{{ effectiveBaseUrl || '—' }}</code></p>
+          <p>Base URL: <code class="text-foreground">{{ effectiveBaseUrl || '—' }}</code></p>
           <p>能力开关：reasoning / vision / model list / 兼容字段会按 Provider 自动配置。</p>
         </div>
 

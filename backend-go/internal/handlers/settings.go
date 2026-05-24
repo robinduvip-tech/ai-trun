@@ -69,3 +69,40 @@ func SetStripBillingHeader(cfgManager *config.ConfigManager) gin.HandlerFunc {
 		})
 	}
 }
+
+// GetThemePreference 获取主题偏好
+func GetThemePreference(cfgManager *config.ConfigManager) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"themePreference": cfgManager.GetThemePreference(),
+		})
+	}
+}
+
+// SetThemePreference 设置主题偏好
+func SetThemePreference(cfgManager *config.ConfigManager) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			Theme string `json:"theme"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(400, gin.H{"error": "Invalid request body"})
+			return
+		}
+
+		if req.Theme != "light" && req.Theme != "dark" && req.Theme != "auto" {
+			c.JSON(400, gin.H{"error": "Theme must be 'light', 'dark', or 'auto'"})
+			return
+		}
+
+		if err := cfgManager.SetThemePreference(req.Theme); err != nil {
+			c.JSON(500, gin.H{"error": "Failed to save config"})
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"success":         true,
+			"themePreference": req.Theme,
+		})
+	}
+}

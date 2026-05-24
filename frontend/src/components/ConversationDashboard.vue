@@ -396,9 +396,9 @@ fetchAllChannels()
   margin: 0 auto;
 }
 .filter-chip {
-  border-radius: 0 !important;
+  border-radius: 8px !important;
   font-size: 10px !important;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.06em;
 }
 .kind-filter-select {
@@ -461,5 +461,8 @@ fetchAllChannels()
 @keyframes dot-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
+}
+.conversation-dashboard .v-card:not(.conversation-card) {
+  border-radius: 10px;
 }
 </style>

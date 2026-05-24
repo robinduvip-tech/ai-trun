@@ -446,6 +446,10 @@ func main() {
 		apiGroup.GET("/settings/strip-billing-header", handlers.GetStripBillingHeader(cfgManager))
 		apiGroup.PUT("/settings/strip-billing-header", handlers.SetStripBillingHeader(cfgManager))
 
+		// 主题偏好设置
+		apiGroup.GET("/settings/theme", handlers.GetThemePreference(cfgManager))
+		apiGroup.PUT("/settings/theme", handlers.SetThemePreference(cfgManager))
+
 		// 会话调度看板 API
 		convDeps := &handlers.ConversationHandlerDeps{
 			Tracker:          conversationTracker,

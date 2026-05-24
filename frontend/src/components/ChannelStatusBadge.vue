@@ -141,8 +141,8 @@ const formatTime = (dateStr: string): string => {
 
 <style scoped>
 /* =====================================================
-   🎮 状态徽章 - 复古像素主题样式
-   Neo-Brutalism: 直角、实体边框、高对比度
+   状态徽章 - Precision Glass 主题样式
+   柔和圆角、清晰色彩、现代感
    ===================================================== */
 
 .status-badge {
@@ -156,11 +156,12 @@ const formatTime = (dateStr: string): string => {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 5px 9px;
+  padding: 5px 10px;
+  border-radius: 6px;
   background: rgb(var(--v-theme-surface));
-  border: 1px solid rgb(var(--v-theme-on-surface));
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   cursor: help;
-  transition: all 0.1s ease;
+  transition: all 0.2s ease;
   line-height: 1;
 }
 
@@ -173,7 +174,7 @@ const formatTime = (dateStr: string): string => {
 }
 
 .v-theme--dark .badge-content {
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .badge-content:hover {

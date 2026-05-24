@@ -24,113 +24,76 @@ const sizeStyle = computed(() => {
       class="w-full h-full"
     >
       <defs>
-        <!-- 主流光渐变线 -->
-        <linearGradient id="ccx-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#3b82f6" />   <!-- CCX Blue -->
-          <stop offset="50%" stop-color="#6366f1" />  <!-- Indigo -->
-          <stop offset="100%" stop-color="#10b981" /> <!-- Emerald Green -->
+        <!-- 底板渐变 -->
+        <linearGradient id="ccx-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4F46E5" />
+          <stop offset="100%" stop-color="#7C3AED" />
         </linearGradient>
-
-        <!-- 极细微高斯发光滤镜 -->
-        <filter id="ccx-glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        <!-- 高光 -->
+        <linearGradient id="ccx-shine" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.25)" />
+          <stop offset="50%" stop-color="rgba(255,255,255,0.02)" />
+          <stop offset="100%" stop-color="rgba(0,0,0,0.08)" />
+        </linearGradient>
+        <!-- 图标线条渐变 -->
+        <linearGradient id="ccx-line" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.95)" />
+          <stop offset="100%" stop-color="rgba(255,255,255,0.7)" />
+        </linearGradient>
+        <!-- 阴影 -->
+        <filter id="ccx-shadow" x="-20%" y="-10%" width="140%" height="130%">
+          <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="rgba(0,0,0,0.2)" />
         </filter>
       </defs>
 
-      <!-- 1. 外部数据循环轨道 (Orbit) - 缩收半径至 38px 以防止在 24px 微尺寸下贴边被视口物理裁剪，上调亮度 -->
-      <circle
-        cx="50"
-        cy="50"
-        r="38"
-        stroke="url(#ccx-logo-grad)"
-        stroke-width="2"
-        stroke-dasharray="10 6 3 6"
-        class="opacity-65"
-        :class="{ 'animate-orbit-rotate': animated }"
-      />
+      <!-- 圆角方形底板 -->
+      <rect x="6" y="6" width="88" height="88" rx="22"
+        fill="url(#ccx-bg)" filter="url(#ccx-shadow)" />
+      <!-- 高光覆盖 -->
+      <rect x="6" y="6" width="88" height="88" rx="22"
+        fill="url(#ccx-shine)" />
 
-      <!-- 2. "C" 字型左翼分流弧线 -->
-      <path
-        d="M 32 24 C 18 32, 18 68, 32 76"
-        stroke="url(#ccx-logo-grad)"
-        stroke-width="5"
-        stroke-linecap="round"
-        class="opacity-80"
-      />
+      <!-- 路由节点拓扑图 -->
+      <g :class="{ 'ccx-pulse': animated }" transform-origin="50 50">
+        <!-- 连接线 -->
+        <line x1="50" y1="50" x2="28" y2="26" stroke="url(#ccx-line)" stroke-width="2.5" stroke-linecap="round" opacity="0.45" />
+        <line x1="50" y1="50" x2="74" y2="30" stroke="url(#ccx-line)" stroke-width="2.5" stroke-linecap="round" opacity="0.4" />
+        <line x1="50" y1="50" x2="26" y2="68" stroke="url(#ccx-line)" stroke-width="2.5" stroke-linecap="round" opacity="0.4" />
+        <line x1="50" y1="50" x2="74" y2="72" stroke="url(#ccx-line)" stroke-width="2.5" stroke-linecap="round" opacity="0.45" />
 
-      <!-- 3. "X" 字型右翼路由交叉交叉射束 -->
-      <path
-        d="M 72 24 L 50 50 L 72 76"
-        stroke="url(#ccx-logo-grad)"
-        stroke-width="5"
-        stroke-linecap="round"
-        class="opacity-80"
-      />
+        <!-- 外圈节点 -->
+        <circle cx="28" cy="26" r="5" fill="url(#ccx-line)" opacity="0.75" />
+        <circle cx="74" cy="30" r="5" fill="url(#ccx-line)" opacity="0.65" />
+        <circle cx="26" cy="68" r="5" fill="url(#ccx-line)" opacity="0.65" />
+        <circle cx="74" cy="72" r="5" fill="url(#ccx-line)" opacity="0.75" />
 
-      <!-- 4. X 的核心反向贯穿路径 -->
-      <path
-        d="M 50 50 L 36 36"
-        stroke="url(#ccx-logo-grad)"
-        stroke-width="5"
-        stroke-linecap="round"
-        class="opacity-85"
-      />
-      <path
-        d="M 50 50 L 36 64"
-        stroke="url(#ccx-logo-grad)"
-        stroke-width="5"
-        stroke-linecap="round"
-        class="opacity-85"
-      />
+        <!-- 中心节点 -->
+        <circle cx="50" cy="50" r="8" fill="url(#ccx-line)" opacity="0.95" />
 
-      <!-- 5. 核心高能 AI 智能调度路由核 (Glowing Core Node) -->
-      <g :class="{ 'animate-core-pulse': animated }" filter="url(#ccx-glow)">
-        <!-- 外层发光晕 -->
-        <circle
-          cx="50"
-          cy="50"
-          r="9"
-          fill="url(#ccx-logo-grad)"
-          class="opacity-40"
-        />
-        <!-- 内层核心实心点 -->
-        <circle
-          cx="50"
-          cy="50"
-          r="5.5"
-          fill="#ffffff"
-        />
+        <!-- 轨道环 -->
+        <circle cx="50" cy="50" r="18"
+          stroke="url(#ccx-line)" stroke-width="2"
+          stroke-dasharray="5 3 2 4" fill="none"
+          opacity="0.3"
+          :class="{ 'ccx-orbit': animated }" />
       </g>
     </svg>
   </div>
 </template>
 
 <style scoped>
-/* 外部虚线轨道极速缓慢旋转 */
-@keyframes orbit-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.ccx-pulse {
+  animation: ccx-pulse 3s infinite ease-in-out;
 }
-.animate-orbit-rotate {
+@keyframes ccx-pulse {
+  0%, 100% { transform: scale(0.97); opacity: 0.92; }
+  50%      { transform: scale(1.02); opacity: 1; }
+}
+.ccx-orbit {
   transform-origin: 50px 50px;
-  animation: orbit-spin 25s linear infinite;
+  animation: ccx-spin 18s linear infinite;
 }
-
-/* 核心路由节点仿生呼吸脉冲 */
-@keyframes core-pulse {
-  0%, 100% {
-    transform: scale(0.92);
-    transform-origin: 50px 50px;
-    opacity: 0.85;
-  }
-  50% {
-    transform: scale(1.08);
-    transform-origin: 50px 50px;
-    opacity: 1;
-  }
-}
-.animate-core-pulse {
-  animation: core-pulse 2.5s infinite ease-in-out;
+@keyframes ccx-spin {
+  to { transform: rotate(360deg); }
 }
 </style>

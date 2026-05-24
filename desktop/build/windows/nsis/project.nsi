@@ -88,7 +88,7 @@ Section
     
     !insertmacro wails.files
 
-    ; 捆绑 ccx-go 后端二进制
+    ; Bundle ccx-go backend binary
     File /nonfatal "ccx-go.exe"
 
     CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"

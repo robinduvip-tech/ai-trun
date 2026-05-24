@@ -115,20 +115,20 @@ const diagnostic = computed<DiagnosticInfo>(() => {
         <div class="flex items-center justify-between gap-2">
           <h4 :class="['text-sm font-semibold', diagnostic.color]">{{ diagnostic.title }}</h4>
           <button
-            class="text-slate-500 hover:text-slate-300 transition-colors shrink-0"
+            class="text-muted-foreground hover:text-foreground/80 transition-colors shrink-0"
             @click="dismissed = true; emit('dismiss')"
           >
             <X class="h-4 w-4" />
           </button>
         </div>
-        <p class="text-xs text-slate-400 font-mono break-all leading-relaxed">{{ error }}</p>
+        <p class="text-xs text-muted-foreground font-mono break-all leading-relaxed">{{ error }}</p>
         <ul class="space-y-1 pt-1">
           <li
             v-for="(suggestion, i) in diagnostic.suggestions"
             :key="i"
-            class="text-xs text-slate-400 flex items-start gap-1.5"
+            class="text-xs text-muted-foreground flex items-start gap-1.5"
           >
-            <span class="text-slate-600 mt-px">-</span>
+            <span class="text-muted-foreground mt-px">-</span>
             <span>{{ suggestion }}</span>
           </li>
         </ul>
