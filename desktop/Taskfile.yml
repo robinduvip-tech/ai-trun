@@ -7,7 +7,7 @@ includes:
   linux: ./build/linux/Taskfile.yml
 
 vars:
-  APP_NAME: "ccx-desktop"
+  APP_NAME: "ai-trun"
   BIN_DIR: "bin"
   VITE_PORT: '{{.WAILS_VITE_PORT | default 3677}}'
 

@@ -45,5 +45,6 @@ func BuildChannelView(up config.UpstreamConfig, index int) gin.H {
 		"noVision":                      up.NoVision,
 		"noVisionModels":                up.NoVisionModels,
 		"visionFallbackModel":           up.VisionFallbackModel,
+			"imageFormat":                   up.ImageFormat,
 	}
 }

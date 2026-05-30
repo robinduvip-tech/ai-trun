@@ -45,7 +45,7 @@ func main() {
 	desktopService.setNotifications(notificationService)
 
 	app := application.New(application.Options{
-		Name:        "CCX Desktop",
+		Name:        "ai-trun Desktop",
 		Description: "CCX desktop shell and core service supervisor",
 		Services: []application.Service{
 			application.NewService(desktopService),
@@ -84,7 +84,7 @@ func main() {
 	// 应用持久化窗口状态（如存在），否则回退到默认 Center。
 	// X/Y 仅在 InitialPosition=WindowXY 时生效（go doc 确认）。
 	windowOpts := application.WebviewWindowOptions{
-		Title:     "CCX Desktop",
+		Title:     "ai-trun Desktop",
 		Width:     1180,
 		Height:    820,
 		MinWidth:  960,
@@ -175,7 +175,7 @@ func main() {
 	})
 
 	tray := app.SystemTray.New()
-	tray.SetTooltip("CCX Desktop")
+	tray.SetTooltip("ai-trun Desktop")
 	if icon, err := assets.ReadFile("frontend/dist/wails.png"); err == nil && len(icon) > 0 {
 		tray.SetTemplateIcon(icon)
 	}

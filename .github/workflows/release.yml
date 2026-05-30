@@ -81,14 +81,14 @@ jobs:
           GIT_COMMIT: ${{ github.sha }}
         run: |
           mkdir -p bin
-          cp ../backend-go/ccx-darwin-arm64 bin/ccx-go
+          cp ../backend-go/ccx-darwin-arm64 bin/ai-trun
           BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')
           VERSION="${BUILD_VERSION#v}"
           wails3 task darwin:package ARCH=arm64 BUILD_VERSION="${VERSION}" BUILD_TIME="${BUILD_TIME}" GIT_COMMIT="${GIT_COMMIT}"
           rm -f "bin/CCX Desktop-arm64.dmg" || true
-          hdiutil create -volname "CCX Desktop" -srcfolder "bin/ccx-desktop.app" -ov -format UDZO "bin/CCX-Desktop-${VERSION}-darwin-arm64.dmg"
+          hdiutil create -volname "CCX Desktop" -srcfolder "bin/ai-trun.app" -ov -format UDZO "bin/CCX-Desktop-${VERSION}-darwin-arm64.dmg"
           shasum -a 256 "bin/CCX-Desktop-${VERSION}-darwin-arm64.dmg" | awk '{print $1}' > "bin/CCX-Desktop-${VERSION}-darwin-arm64.dmg.sha256"
-          rm -rf "bin/ccx-desktop.app"
+          rm -rf "bin/ai-trun.app"
         working-directory: ./desktop
 
       - name: Build Desktop amd64 DMG
@@ -96,14 +96,14 @@ jobs:
           BUILD_VERSION: ${{ github.ref_name }}
           GIT_COMMIT: ${{ github.sha }}
         run: |
-          cp ../backend-go/ccx-darwin-amd64 bin/ccx-go
+          cp ../backend-go/ccx-darwin-amd64 bin/ai-trun
           BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')
           VERSION="${BUILD_VERSION#v}"
           wails3 task darwin:package ARCH=amd64 BUILD_VERSION="${VERSION}" BUILD_TIME="${BUILD_TIME}" GIT_COMMIT="${GIT_COMMIT}"
           rm -f "bin/CCX Desktop-amd64.dmg" || true
-          hdiutil create -volname "CCX Desktop" -srcfolder "bin/ccx-desktop.app" -ov -format UDZO "bin/CCX-Desktop-${VERSION}-darwin-amd64.dmg"
+          hdiutil create -volname "CCX Desktop" -srcfolder "bin/ai-trun.app" -ov -format UDZO "bin/CCX-Desktop-${VERSION}-darwin-amd64.dmg"
           shasum -a 256 "bin/CCX-Desktop-${VERSION}-darwin-amd64.dmg" | awk '{print $1}' > "bin/CCX-Desktop-${VERSION}-darwin-amd64.dmg.sha256"
-          rm -rf "bin/ccx-desktop.app"
+          rm -rf "bin/ai-trun.app"
         working-directory: ./desktop
 
       - name: Generate macOS checksums and sign
@@ -247,8 +247,8 @@ jobs:
           GIT_COMMIT: ${{ github.sha }}
         run: |
           mkdir -p bin
-          cp ../backend-go/ccx-windows-amd64.exe bin/ccx-go.exe
-          cp bin/ccx-go.exe build/windows/nsis/ccx-go.exe
+          cp ../backend-go/ccx-windows-amd64.exe bin/ai-trun.exe
+          cp bin/ai-trun.exe build/windows/nsis/ai-trun.exe
           BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')
           VERSION="${BUILD_VERSION#v}"
           rm -f bin/*installer*.exe bin/*setup*.exe
@@ -268,8 +268,8 @@ jobs:
           BUILD_VERSION: ${{ github.ref_name }}
           GIT_COMMIT: ${{ github.sha }}
         run: |
-          cp ../backend-go/ccx-windows-arm64.exe bin/ccx-go.exe
-          cp bin/ccx-go.exe build/windows/nsis/ccx-go.exe
+          cp ../backend-go/ccx-windows-arm64.exe bin/ai-trun.exe
+          cp bin/ai-trun.exe build/windows/nsis/ai-trun.exe
           BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')
           VERSION="${BUILD_VERSION#v}"
           rm -f bin/*installer*.exe bin/*setup*.exe
@@ -401,7 +401,7 @@ jobs:
           GIT_COMMIT: ${{ github.sha }}
         run: |
           mkdir -p bin
-          cp ../backend-go/ccx-linux-amd64 bin/ccx-go
+          cp ../backend-go/ccx-linux-amd64 bin/ai-trun
           BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')
           VERSION="${BUILD_VERSION#v}"
           wails3 task linux:create:appimage ARCH=amd64 BUILD_VERSION="${VERSION}" BUILD_TIME="${BUILD_TIME}" GIT_COMMIT="${GIT_COMMIT}"
@@ -511,7 +511,7 @@ jobs:
           GIT_COMMIT: ${{ github.sha }}
         run: |
           mkdir -p bin
-          cp ../backend-go/ccx-linux-arm64 bin/ccx-go
+          cp ../backend-go/ccx-linux-arm64 bin/ai-trun
           BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')
           VERSION="${BUILD_VERSION#v}"
           wails3 task linux:create:appimage ARCH=arm64 BUILD_VERSION="${VERSION}" BUILD_TIME="${BUILD_TIME}" GIT_COMMIT="${GIT_COMMIT}"

@@ -26,17 +26,17 @@ const switchToWeb = () => {
 
 // 主题管理
 const theme = ref<'dark' | 'light'>(
-  (typeof localStorage !== 'undefined' && (localStorage.getItem('ccx-desktop-theme') as 'dark' | 'light')) || 'dark'
+  (typeof localStorage !== 'undefined' && (localStorage.getItem('ai-trun-theme') as 'dark' | 'light')) || 'dark'
 )
 
 const toggleTheme = () => {
   theme.value = theme.value === 'dark' ? 'light' : 'dark'
-  localStorage.setItem('ccx-desktop-theme', theme.value)
+  localStorage.setItem('ai-trun-theme', theme.value)
 
   // 同步主题到 iframe 内的 Web UI
   const iframe = document.querySelector('iframe[src*="localhost"], iframe[src*="127.0.0.1"]') as HTMLIFrameElement | null
   iframe?.contentWindow?.postMessage(
-    { type: 'ccx-theme-change', theme: theme.value },
+    { type: 'ai-trun-theme-change', theme: theme.value },
     '*'
   )
 }
@@ -62,7 +62,7 @@ const tabTitles: Record<TabValue, string> = {
       <header class="h-14 border-b border-border bg-background/60 backdrop-blur-md flex items-center justify-between px-8 shrink-0" data-wails-drag>
         <div class="flex items-center gap-3">
           <span class="text-xs bg-blue-500/10 text-blue-400 font-semibold px-2 py-0.5 rounded border border-blue-500/15">
-            CCX CORE
+            AI-TRUN
           </span>
           <h2 class="text-sm font-bold text-foreground tracking-wide uppercase">
             {{ tabTitles[activeTab] }}

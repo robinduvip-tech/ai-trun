@@ -12,9 +12,9 @@ APP_DIR="${APP_NAME}.AppDir"
 mkdir -p "${APP_DIR}/usr/bin"
 cp -r "${APP_BINARY}" "${APP_DIR}/usr/bin/"
 
-# 捆绑 ccx-go 后端二进制
+# 捆绑 ai-trun 后端二进制
 if [ -n "${APP_BACKEND:-}" ] && [ -f "${APP_BACKEND}" ]; then
-    cp "${APP_BACKEND}" "${APP_DIR}/usr/bin/ccx-go"
+    cp "${APP_BACKEND}" "${APP_DIR}/usr/bin/ai-trun"
 fi
 
 cp "${ICON_PATH}" "${APP_DIR}/"

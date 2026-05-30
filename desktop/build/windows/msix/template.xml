@@ -8,7 +8,7 @@
         AllowPromptForPassword="false">
     </Settings>
     <Installer
-        Path="ccx-desktop"
+        Path="ai-trun"
         Arguments=""
         InstallLocation="C:\Program Files\My Company\My Product">
     </Installer>
@@ -25,10 +25,10 @@
         </Capabilities>
         <Applications>
             <Application
-                Id="com.wails.ccx-desktop"
+                Id="com.wails.ai-trun"
                 Description="My Product Description"
                 DisplayName="My Product"
-                ExecutableName="ccx-desktop"
+                ExecutableName="ai-trun"
                 EntryPoint="Windows.FullTrustApplication">
                 
             </Application>
@@ -47,7 +47,7 @@
             <Logo>Assets\AppIcon.png</Logo>
         </Properties>
     </PackageInformation>
-    <SaveLocation PackagePath="ccx-desktop.msix" />
+    <SaveLocation PackagePath="ai-trun.msix" />
     <PackageIntegrity>
         <CertificatePath></CertificatePath>
     </PackageIntegrity>

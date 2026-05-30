@@ -247,6 +247,9 @@ func (cm *ConfigManager) UpdateResponsesUpstream(index int, updates UpstreamUpda
 	}
 	if updates.VisionFallbackModel != nil {
 		upstream.VisionFallbackModel = *updates.VisionFallbackModel
+		if updates.ImageFormat != nil {
+		upstream.ImageFormat = *updates.ImageFormat
+		}
 	}
 
 	// 检测配置是否真的发生了变化

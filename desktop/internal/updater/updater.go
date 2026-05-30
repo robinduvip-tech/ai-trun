@@ -31,7 +31,7 @@ import (
 const (
 	defaultRepo    = "BenedictKing/ccx"
 	apiBase        = "https://api.github.com"
-	userAgent      = "ccx-desktop-updater"
+	userAgent      = "ai-trun-updater"
 	httpTimeout    = 30 * time.Second
 	downloadBuffer = 32 * 1024
 )

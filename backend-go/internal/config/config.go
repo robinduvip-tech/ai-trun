@@ -68,6 +68,8 @@ type UpstreamConfig struct {
 	NoVision            bool     `json:"noVision,omitempty"`            // 整个渠道不支持图片输入
 	NoVisionModels      []string `json:"noVisionModels,omitempty"`      // 不支持图片输入的模型列表（匹配 modelMapping 后的实际模型名）
 	VisionFallbackModel string   `json:"visionFallbackModel,omitempty"` // 含图请求命中 noVisionModels 时使用的替代模型
+	// 图片格式转换（用于上游 API 图片格式与 OpenAI Chat 不同时自动转换）
+	ImageFormat string `json:"imageFormat,omitempty"` // 图片输入格式：""/openai（默认）, deepseek（image_url→顶层字段）
 }
 
 // DisabledKeyInfo 被拉黑的 API Key 信息
@@ -158,6 +160,7 @@ type UpstreamUpdate struct {
 	NoVision            *bool    `json:"noVision"`
 	NoVisionModels      []string `json:"noVisionModels"`
 	VisionFallbackModel *string  `json:"visionFallbackModel"`
+	ImageFormat         *string  `json:"imageFormat"` // 图片输入格式：""/openai（默认）, deepseek
 }
 
 // Config 配置结构

@@ -47,7 +47,7 @@ const kindDefaults: Record<ErrorKind, Omit<DiagnosticInfo, 'kind'>> = {
     color: 'text-amber-400',
     suggestions: [
       '确认 CCX 二进制已构建: cd backend-go && make build',
-      '检查 Desktop 数据目录中是否存在 ccx-go / ccx-go.exe',
+      '检查 Desktop 数据目录中是否存在 ai-trun / ai-trun.exe',
       '首次使用需先构建后端，或从 Release 页面下载预编译版本',
     ],
   },

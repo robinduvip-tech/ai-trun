@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"log"
+	"math"
 	"sort"
 	"sync"
 	"time"
@@ -62,7 +63,7 @@ func ParseCircuitState(text string) CircuitState {
 }
 
 const (
-	consecutiveRetryableFailuresThreshold int64         = 3
+	consecutiveRetryableFailuresThreshold int64         = math.MaxInt64 // 永不触发熔断
 	halfOpenSuccessThreshold              int           = 1
 	defaultCircuitBackoffBase             time.Duration = 30 * time.Second
 	defaultCircuitBackoffMax              time.Duration = 10 * time.Minute
@@ -180,7 +181,7 @@ func NewMetricsManager() *MetricsManager {
 	m := &MetricsManager{
 		keyMetrics:            make(map[string]*KeyMetrics),
 		windowSize:            10,  // 默认基于最近 10 次请求计算失败率
-		failureThreshold:      0.5, // 默认 50% 失败率阈值
+		failureThreshold:      1.01, // 永不触发（成功率不可能超过100%）
 		circuitRecoveryTime:   defaultCircuitBackoffBase,
 		circuitBackoffBase:    defaultCircuitBackoffBase,
 		circuitBackoffMax:     defaultCircuitBackoffMax,
@@ -197,7 +198,7 @@ func NewMetricsManagerWithConfig(windowSize int, failureThreshold float64) *Metr
 	if windowSize < 3 {
 		windowSize = 3 // 最小 3
 	}
-	if failureThreshold <= 0 || failureThreshold > 1 {
+	if failureThreshold <= 0 || failureThreshold > 1.01 {
 		failureThreshold = 0.5
 	}
 	m := &MetricsManager{
@@ -220,7 +221,7 @@ func NewMetricsManagerWithPersistence(windowSize int, failureThreshold float64, 
 	if windowSize < 3 {
 		windowSize = 3
 	}
-	if failureThreshold <= 0 || failureThreshold > 1 {
+	if failureThreshold <= 0 || failureThreshold > 1.01 {
 		failureThreshold = 0.5
 	}
 	m := &MetricsManager{

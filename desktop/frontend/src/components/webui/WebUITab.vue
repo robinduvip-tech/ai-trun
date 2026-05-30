@@ -16,7 +16,7 @@ const iframeRef = ref<HTMLIFrameElement | null>(null)
 const iframeSrc = computed(() => {
   if (!props.status.url) return ''
   const url = new URL(props.status.url.replace('http://127.0.0.1:', 'http://localhost:'))
-  url.searchParams.set('ccx_desktop', '1')
+  url.searchParams.set('ai-trun_desktop', '1')
   return url.toString()
 })
 
@@ -26,7 +26,7 @@ const postProxyAccessKey = async () => {
     const accessKey = await GetProxyAccessKey()
     const targetOrigin = new URL(iframeSrc.value).origin
     iframeRef.value.contentWindow.postMessage(
-      { type: 'ccx-desktop-auth', accessKey },
+      { type: 'ai-trun-auth', accessKey },
       targetOrigin,
     )
   } catch {
@@ -51,13 +51,13 @@ const openInBrowser = async () => {
         :src="iframeSrc"
         class="w-full border-0"
         style="min-height: 620px; background: white"
-        title="CCX Web UI"
+        title="ai-trun Web UI"
         @load="postProxyAccessKey"
       />
     </div>
     <Card v-else>
       <CardContent class="flex flex-col items-start gap-4 py-8">
-        <p class="text-sm text-muted-foreground">CCX 服务尚未启动，无法显示 Web UI。</p>
+        <p class="text-sm text-muted-foreground">ai-trun 服务尚未启动，无法显示 Web UI。</p>
         <Button size="sm" :disabled="loading" @click="openInBrowser">
           <Globe class="w-4 h-4 mr-1.5" />
           浏览器打开

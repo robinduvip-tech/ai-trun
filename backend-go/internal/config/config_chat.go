@@ -245,6 +245,9 @@ func (cm *ConfigManager) UpdateChatUpstream(index int, updates UpstreamUpdate) (
 	}
 	if updates.VisionFallbackModel != nil {
 		upstream.VisionFallbackModel = *updates.VisionFallbackModel
+		if updates.ImageFormat != nil {
+		upstream.ImageFormat = *updates.ImageFormat
+		}
 	}
 
 	// 检测配置是否真的发生了变化

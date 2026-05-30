@@ -3,7 +3,7 @@
 #
 # The lines below are called `modelines`. See `:help modeline`
 
-name: "ccx-desktop"
+name: "ai-trun"
 arch: ${GOARCH}
 platform: "linux"
 version: "0.1.0"
@@ -17,14 +17,14 @@ license: "MIT"
 release: "1"
 
 contents:
-  - src: "./bin/ccx-desktop"
-    dst: "/usr/local/bin/ccx-desktop"
-  - src: "./bin/ccx-go"
-    dst: "/usr/local/bin/ccx-go"
+  - src: "./bin/ai-trun"
+    dst: "/usr/local/bin/ai-trun"
+  - src: "./bin/ai-trun"
+    dst: "/usr/local/bin/ai-trun"
   - src: "./build/appicon.png"
-    dst: "/usr/share/icons/hicolor/128x128/apps/ccx-desktop.png"
-  - src: "./build/linux/ccx-desktop.desktop"
-    dst: "/usr/share/applications/ccx-desktop.desktop"
+    dst: "/usr/share/icons/hicolor/128x128/apps/ai-trun.png"
+  - src: "./build/linux/ai-trun.desktop"
+    dst: "/usr/share/applications/ai-trun.desktop"
 
 # Default dependencies for Debian 12/Ubuntu 22.04+ with WebKit 4.1
 depends:

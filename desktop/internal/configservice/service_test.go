@@ -383,7 +383,7 @@ func TestNewWithDefaultDataDir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New('') failed: %v", err)
 	}
-	expected := filepath.Join(tmpHome, ".config", "ccx-desktop", "agent-config-state")
+	expected := filepath.Join(tmpHome, ".config", "ai-trun", "agent-config-state")
 	if svc.stateDir != expected {
 		t.Errorf("stateDir = %q, want %q", svc.stateDir, expected)
 	}

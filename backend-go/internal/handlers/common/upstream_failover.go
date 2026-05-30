@@ -148,6 +148,12 @@ func TryUpstreamWithAllKeys(
 
 		for attempt := 0; attempt < maxRetries; attempt++ {
 			attemptBody := requestBody
+
+			// 自动将 image_url 内容块转为 DeepSeek 兼容顶层字段
+			if HasImageContent(c, attemptBody) && isDeepSeekUpstream(upstream) {
+				attemptBody = ConvertChatImageToDeepSeekFormat(attemptBody)
+			}
+
 			if shouldNormalizeMetadataUserID(kind, upstream) {
 				attemptBody = NormalizeMetadataUserID(requestBody)
 			}

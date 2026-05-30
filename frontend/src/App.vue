@@ -17,7 +17,7 @@
     <!-- 认证界面 -->
     <v-dialog v-model="showAuthDialog" persistent max-width="500">
       <v-card class="pa-4">
-        <v-card-title class="text-h5 text-center mb-4"> 🔐 API Proxy - CCX </v-card-title>
+        <v-card-title class="text-h5 text-center mb-4"> 🔐 ai-trun </v-card-title>
 
         <v-card-text>
           <v-alert v-if="authStore.authError" type="error" variant="tonal" class="mb-4">
@@ -63,7 +63,7 @@
     <!-- 应用栏 - 毛玻璃效果 -->
     <v-app-bar elevation="0" :height="$vuetify.display.mobile ? 56 : 72" class="app-header">
       <template #prepend>
-        <a href="https://github.com/BenedictKing/ccx" target="_blank" rel="noopener noreferrer" class="app-logo d-flex align-center justify-center pa-0 overflow-hidden">
+        <a href="https://github.com/BenedictKing/ai-trun" target="_blank" rel="noopener noreferrer" class="app-logo d-flex align-center justify-center pa-0 overflow-hidden">
           <!-- 显著放大 Logo 尺寸（手机端 32px，电脑端 44px）让流转动画和发光更清晰夺目 -->
           <Logo :size="$vuetify.display.mobile ? 32 : 44" />
         </a>
@@ -120,7 +120,7 @@
           <router-link to="/conversations" class="api-type-text" :class="{ active: route.path === '/conversations' }">
             {{ t('app.tabs.conversations') }}
           </router-link>
-          <span class="brand-text d-none d-md-inline">API Proxy - CCX</span>
+          <span class="brand-text d-none d-md-inline">ai-trun</span>
         </div>
       </div>
 
@@ -1712,7 +1712,7 @@ mediaQuery?.addEventListener('change', handlePref)
 // 桌面端主题同步（模块级，供 onMounted 注册 / onUnmounted 清理）
 const handleThemeSync = (event: MessageEvent) => {
   const data = event.data as { type?: string; theme?: string }
-  if (data?.type === 'ccx-theme-change' && (data?.theme === 'light' || data?.theme === 'dark')) {
+  if (data?.type === 'ai-trun-theme-change' && (data?.theme === 'light' || data?.theme === 'dark')) {
     setDarkMode(data.theme)
   }
 }
@@ -1729,12 +1729,12 @@ onMounted(async () => {
   checkVersion()
 
   // 监听 UpdateDialog 手动触发的版本检查
-  window.addEventListener('ccx-check-version', () => { checkVersion() })
+  window.addEventListener('ai-trun-check-version', () => { checkVersion() })
 
   // 监听桌面端的主题同步消息
   window.addEventListener('message', handleThemeSync)
 
-  const desktopAutoLogin = window.self !== window.top && new URLSearchParams(window.location.search).get('ccx_desktop') === '1'
+  const desktopAutoLogin = window.self !== window.top && new URLSearchParams(window.location.search).get('ai-trun_desktop') === '1'
 
   if (desktopAutoLogin) {
     authStore.clearAuth()
@@ -1744,7 +1744,7 @@ onMounted(async () => {
 
     const handleDesktopAuth = async (event: MessageEvent) => {
       const data = event.data as { type?: string; accessKey?: string }
-      if (data?.type !== 'ccx-desktop-auth' || !data.accessKey) return
+      if (data?.type !== 'ai-trun-auth' || !data.accessKey) return
 
       window.removeEventListener('message', handleDesktopAuth)
       authStore.setAuthKeyInput(data.accessKey)

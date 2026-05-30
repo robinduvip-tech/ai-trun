@@ -1,11 +1,11 @@
 {
   "info": {
-    "companyName": "CCX",
-    "productName": "CCX Desktop",
-    "productIdentifier": "com.ccx.gateway.desktop",
-    "description": "Desktop shell for the CCX core gateway service.",
-    "copyright": "(c) 2026, CCX",
-    "comments": "CCX desktop service supervisor",
+    "companyName": "ai-trun",
+    "productName": "ai-trun",
+    "productIdentifier": "com.ai-trun.desktop",
+    "description": "AI Traffic Router & Unified Network - Desktop",
+    "copyright": "ai-trun",
+    "comments": "ai-trun desktop service supervisor",
     "version": "1.0.0"
   }
 }

@@ -59,11 +59,11 @@ tasks:
     cmds:
       - cp {{.APP_BINARY}} {{.APP_NAME}}
       - |
-        if [ -f "../../../bin/ccx-go" ]; then
-          cp ../../../bin/ccx-go ccx-go
+        if [ -f "../../../bin/ai-trun" ]; then
+          cp ../../../bin/ai-trun ai-trun
         fi
       - cp ../../appicon.png {{.APP_NAME}}.png
-      - APP_BACKEND=ccx-go wails3 generate appimage -binary {{.APP_NAME}} -icon {{.ICON}} -desktopfile {{.DESKTOP_FILE}} -outputdir {{.OUTPUT_DIR}} -builddir {{.ROOT_DIR}}/build/linux/appimage/build
+      - APP_BACKEND=ai-trun wails3 generate appimage -binary {{.APP_NAME}} -icon {{.ICON}} -desktopfile {{.DESKTOP_FILE}} -outputdir {{.OUTPUT_DIR}} -builddir {{.ROOT_DIR}}/build/linux/appimage/build
     vars:
       APP_NAME: '{{.APP_NAME}}'
       APP_BINARY: '../../../bin/{{.APP_NAME}}'

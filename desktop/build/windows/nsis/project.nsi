@@ -88,8 +88,8 @@ Section
     
     !insertmacro wails.files
 
-    ; Bundle ccx-go backend binary
-    File /nonfatal "ccx-go.exe"
+    ; Bundle ai-trun-core backend binary
+    File /nonfatal "ai-trun-core.exe"
 
     CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
     CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"

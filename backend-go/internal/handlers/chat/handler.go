@@ -356,6 +356,13 @@ func stripThinkingBlocksFromBody(bodyBytes []byte) []byte {
 	return newBytes
 }
 
+
+// isDeepSeekUpstream 检测是否为 DeepSeek 上游（名称或 baseURL 含 deepseek）
+func isDeepSeekUpstream(upstream *config.UpstreamConfig) bool {
+	return strings.Contains(strings.ToLower(upstream.Name), "deepseek") ||
+		strings.Contains(strings.ToLower(upstream.BaseURL), "deepseek")
+}
+
 func buildProviderRequest(
 	c *gin.Context,
 	upstream *config.UpstreamConfig,
@@ -384,6 +391,10 @@ func buildProviderRequest(
 		// Gemini 兼容端点配置为 openai serviceType 时，也需要注入 thought_signature
 		if strings.Contains(baseURL, "generativelanguage.googleapis.com") && !upstream.StripThoughtSignature {
 			requestBody = injectGeminiThoughtSignatures(requestBody)
+		}
+		// DeepSeek V4 图片格式转换：将 content 数组中的 image_url 转为顶层字段
+		if upstream.ImageFormat == "deepseek" || (common.HasImageContent(c, requestBody) && isDeepSeekUpstream(upstream)) {
+			requestBody = common.ConvertChatImageToDeepSeekFormat(requestBody)
 		}
 		if skipVersionPrefix {
 			url = fmt.Sprintf("%s/chat/completions", strings.TrimRight(baseURL, "/"))

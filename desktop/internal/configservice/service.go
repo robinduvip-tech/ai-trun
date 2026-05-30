@@ -98,7 +98,7 @@ func New(dataDir string) (*Service, error) {
 		return nil, fmt.Errorf("无法定位用户主目录")
 	}
 	if dataDir == "" {
-		dataDir = filepath.Join(homeDir, ".config", "ccx-desktop")
+		dataDir = filepath.Join(homeDir, ".config", "ai-trun")
 	}
 	stateDir := filepath.Join(dataDir, "agent-config-state")
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {

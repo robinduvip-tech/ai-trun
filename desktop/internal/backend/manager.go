@@ -379,7 +379,7 @@ func (m *Manager) findBinary() (string, error) {
 }
 
 func (m *Manager) binaryCandidates() []string {
-	name := "ccx-go"
+	name := "ai-trun-core"
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
@@ -639,7 +639,7 @@ func defaultDataDir(rootDir string) string {
 	}
 	hash := sha1.Sum([]byte(filepath.Clean(rootDir)))
 	instance := hex.EncodeToString(hash[:])[:10]
-	return filepath.Join(base, "ccx-desktop", instance)
+	return filepath.Join(base, "ai-trun", instance)
 }
 
 func setEnv(env []string, key, value string) []string {

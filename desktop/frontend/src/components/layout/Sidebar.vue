@@ -27,7 +27,7 @@ const menuItems = [
   { id: 'agent', label: 'Agent 配置', icon: Settings, desc: '本地开发代理控制' },
   { id: 'channels', label: '渠道中心', icon: Network, desc: '一键添加上游渠道' },
   { id: 'env', label: '环境参数', icon: Sliders, desc: '网关配置文件编辑' },
-  { id: 'web', label: '管理界面', icon: Globe, desc: 'CCX Web 控制面板' }
+  { id: 'web', label: '管理界面', icon: Globe, desc: 'ai-trun Web 控制面板' }
 ] as const
 
 const statusLabel = computed(() => {
@@ -59,7 +59,7 @@ const handleDaemonAction = async () => {
       <div class="flex items-center gap-2.5 mt-2.5">
         <Logo :size="32" />
         <span class="text-sm font-bold tracking-wider text-foreground/80">
-          CCX CONTROL
+          AI-TRUN
         </span>
       </div>
     </div>
